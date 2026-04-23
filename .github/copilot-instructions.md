@@ -34,6 +34,13 @@
 - After adding new tests, always run the **entire** test suite: `npx playwright test`.
 - Use Page Object Model only if a page is referenced by 3+ test files. Otherwise, inline selectors.
 
+### Mock UI Reference
+
+- `specs/mock-ui.html` is the **single source of truth** for visual design, layout, colors, spacing, and component structure.
+- Every frontend implementation MUST read this file first and match its visual appearance.
+- The HTML contains inline styles/Tailwind classes that indicate the intended design — replicate them in React components.
+- When acceptance criteria reference visual elements (logo, tagline, card layout, etc.), the mock UI shows exactly how they should look.
+
 ### Authentication
 
 - PoC only: hardcoded check on the frontend. Username: `admin`, Password: `admin`.
@@ -69,6 +76,7 @@ BessIntelligenceDashboard/
 │   └── playwright.config.ts
 └── specs/
     ├── user-stories.md    # Master document (Markdown)
+    ├── mock-ui.html       # Static HTML mockup — visual reference for all implementations
     └── features/          # Parsed individual feature files
         └── F-XX/
             └── US-XX-XX.md

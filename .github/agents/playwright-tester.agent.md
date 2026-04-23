@@ -11,16 +11,17 @@ You will receive a user story ID (e.g., `US-01-01`). Find the spec file at `spec
 ## Procedure
 
 1. Read the feature spec file — focus on acceptance criteria and test cases table.
-2. Read the implemented frontend code to understand actual selectors, routes, and UI structure.
-3. Read existing tests in `e2e/tests/` to understand patterns and shared helpers.
-4. Create the test file at `e2e/tests/F-XX/us-XX-XX.spec.ts` (kebab-case filename).
-5. Write one or more `test()` blocks per acceptance criterion.
-6. **Run the ENTIRE test suite** (not just the new file):
+2. **Read `specs/mock-ui.html`** — this is the visual reference. Use it to understand expected text content, element hierarchy, CSS classes, and layout structure for writing accurate assertions.
+3. Read the implemented frontend code to understand actual selectors, routes, and UI structure.
+4. Read existing tests in `e2e/tests/` to understand patterns and shared helpers.
+5. Create the test file at `e2e/tests/F-XX/us-XX-XX.spec.ts` (kebab-case filename).
+6. Write one or more `test()` blocks per acceptance criterion.
+7. **Run the ENTIRE test suite** (not just the new file):
    ```bash
    cd e2e && npx playwright test
    ```
-7. If any tests fail, diagnose and fix them. Re-run until all pass.
-8. Report results.
+8. If any tests fail, diagnose and fix them. Re-run until all pass.
+9. Report results.
 
 ## Test File Structure
 

@@ -6,7 +6,8 @@ argument-hint: "User story ID (e.g., US-01-01)"
 Generate Playwright E2E tests for user story **{{input}}**.
 
 1. Read the spec at `specs/features/` for this user story — focus on acceptance criteria and test cases.
-2. Read the implemented frontend code to understand actual selectors and routes.
+2. Read `specs/mock-ui.html` for expected visual structure and text content.
+3. Read the implemented frontend code to understand actual selectors and routes.
 3. Create the test file at `e2e/tests/F-XX/us-XX-XX.spec.ts`.
 4. Write at least one test per acceptance criterion.
 5. **Run the ENTIRE test suite**: `cd e2e && npx playwright test`.

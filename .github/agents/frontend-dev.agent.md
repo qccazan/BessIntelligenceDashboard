@@ -11,26 +11,25 @@ You will receive a user story ID (e.g., `US-01-01`). Find the spec file at `spec
 ## Procedure
 
 1. Read the feature spec file to understand requirements and acceptance criteria.
-2. Read existing frontend code to understand current pages, components, routing, and services.
-3. Read the backend controllers to understand available API endpoints (check `backend/BessIntelligence.Api/Controllers/`).
-4. Plan what needs to be created/modified:
+2. **Read `specs/mock-ui.html`** — this is the visual reference for the entire application. Match its layout, colors, spacing, component structure, and styling in your React implementation.
+3. Read existing frontend code to understand current pages, components, routing, and services.
+4. Read the backend controllers to understand available API endpoints (check `backend/BessIntelligence.Api/Controllers/`).
+5. Plan what needs to be created/modified:
    - New page(s) in `frontend/src/pages/`
    - New reusable component(s) in `frontend/src/components/` (only if used by 2+ pages)
    - New API service function(s) in `frontend/src/services/`
    - Route updates in `App.tsx`
    - TypeScript interfaces for API responses
-5. Implement all changes following the conventions.
-6. Run `npm run build` to validate TypeScript compilation.
-7. Report what was created.
+6. Implement all changes following the conventions.
+7. Run `npm run build` to validate TypeScript compilation.
+8. Report what was created.
 
 ## Visual Design Rules
 
+- **`specs/mock-ui.html` is the primary visual reference.** Read it before implementing any UI. Match its structure, colors, spacing, and component layout.
+- Extract Tailwind classes, color palette, and layout patterns from the mock HTML and replicate them in React components.
 - Use Tailwind CSS v4 utility classes for all styling. No CSS files.
 - Reference acceptance criteria for specific layout/visual requirements.
-- Professional, clean appearance. Use a consistent color palette.
-- BESS Intelligence brand: Use indigo/blue tones as primary, gray for neutral, green for positive states, red for alerts.
-- Cards with rounded corners (`rounded-lg`), subtle shadows (`shadow-md`), generous padding (`p-6`).
-- Centered layouts for auth screens. Dashboard uses a sidebar or top-nav pattern.
 - Responsive: should not break on laptop (≥ 1024px) or tablet (≥ 768px) viewports.
 
 ## Component Patterns
