@@ -57,7 +57,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
           </div>
           <div className="bg-[#FFE8DE] px-3.5 py-2 rounded-[10px] text-right">
             <p className="text-[10px] text-[#B8461A] font-medium uppercase tracking-wider m-0">Net power</p>
-            <p className="text-base font-medium text-[#5C210A] mt-0.5 m-0">−465 kW</p>
+            <p className="text-base font-medium text-[#5C210A] mt-0.5 m-0">−0.47 MWh</p>
           </div>
         </div>
       </div>
