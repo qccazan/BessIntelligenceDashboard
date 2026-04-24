@@ -13,6 +13,10 @@ export interface FleetAsset {
   nextAction: string;
   nextActionWindow: string;
   faultCode: string | null;
+  chemistry: string;
+  powerRatingKw: number;
+  capacityKwh: number;
+  durationH: number;
 }
 
 export interface FleetSummary {
@@ -23,6 +27,16 @@ export interface FleetSummary {
   assets: FleetAsset[];
 }
 
+export interface BatteryHistoryPoint {
+  timestamp: string;
+  powerKw: number;
+  socPct: number;
+}
+
 export async function getFleetSummary(): Promise<FleetSummary> {
   return fetchApi<FleetSummary>('/api/batteries/fleet');
+}
+
+export async function getBatteryHistory(code: string): Promise<BatteryHistoryPoint[]> {
+  return fetchApi<BatteryHistoryPoint[]>(`/api/batteries/${encodeURIComponent(code)}/history24h`);
 }

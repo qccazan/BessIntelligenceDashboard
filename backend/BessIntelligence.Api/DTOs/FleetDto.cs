@@ -12,7 +12,11 @@ public record FleetAssetDto(
     double TemperatureC,
     string NextAction,
     string NextActionWindow,
-    string? FaultCode
+    string? FaultCode,
+    string Chemistry,
+    int PowerRatingKw,
+    int CapacityKwh,
+    double DurationH
 );
 
 public record FleetSummaryDto(

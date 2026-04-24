@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { MarketForecastCard } from '../components/MarketForecastCard';
 import { FleetOverviewCard } from '../components/FleetOverviewCard';
+import { CurrentStateCard } from '../components/CurrentStateCard';
+import { ReplayCard } from '../components/ReplayCard';
 import type { FleetSummary } from '../services/batteryService';
 import { getFleetSummary } from '../services/batteryService';
 
@@ -15,6 +17,8 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
   useEffect(() => {
     getFleetSummary().then(setFleetSummary).catch(() => {});
   }, []);
+
+  const selectedAsset = fleetSummary?.assets.find(a => a.code === selectedAssetId);
 
   return (
     <div className="max-w-[1280px] mx-auto p-5" data-testid="dashboard">
@@ -84,15 +88,14 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
           onSelectAsset={setSelectedAssetId}
         />
 
-        {/* Current State placeholder (F-04) */}
-        <div className="bg-white rounded-[14px] p-5 border border-[rgba(88,70,180,0.14)] flex items-center justify-center min-h-[120px]" data-testid="current-state-card" data-asset={selectedAssetId}>
-          <p className="text-[#8C8AA8] text-sm">Current state — {selectedAssetId}</p>
-        </div>
+        {/* Current State Card (F-04) */}
+        <CurrentStateCard asset={selectedAsset} />
 
-        {/* Replay placeholder (F-05) */}
-        <div className="bg-white rounded-[14px] p-5 border border-[rgba(88,70,180,0.14)] flex items-center justify-center min-h-[120px]" data-testid="replay-card" data-asset={selectedAssetId}>
-          <p className="text-[#8C8AA8] text-sm">Last 24 hours replay — {selectedAssetId}</p>
-        </div>
+        {/* Replay Card (F-05) */}
+        <ReplayCard
+          selectedAssetCode={selectedAssetId}
+          capacity={selectedAsset?.capacityKwh ?? 1000}
+        />
       </div>
 
       <p className="text-center text-[11px] text-[#8C8AA8] mt-5 mb-2.5 italic">

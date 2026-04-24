@@ -45,7 +45,11 @@ public class BatteriesController : ControllerBase
                 Math.Round(t?.TemperatureC ?? 0, 1),
                 t?.NextAction ?? "—",
                 t?.NextActionWindow ?? "—",
-                t?.FaultCode
+                t?.FaultCode,
+                b.Chemistry,
+                b.PowerRatingKw,
+                b.CapacityKwh,
+                b.DurationH
             );
         }).ToList();
 
@@ -67,5 +71,30 @@ public class BatteriesController : ControllerBase
             assets.Count,
             assets
         ));
+    }
+
+    [HttpGet("{code}/history24h")]
+    public async Task<ActionResult<List<BatteryHistoryDto>>> GetHistory24h(string code)
+    {
+        var battery = await _context.Batteries.FirstOrDefaultAsync(b => b.Code == code);
+        if (battery is null)
+            return NotFound();
+
+        var now = await _context.BatteryHistories
+            .Where(h => h.BatteryId == battery.Id)
+            .MaxAsync(h => (DateTimeOffset?)h.Timestamp);
+
+        if (now is null)
+            return Ok(new List<BatteryHistoryDto>());
+
+        var start = now.Value.AddHours(-24);
+
+        var history = await _context.BatteryHistories
+            .Where(h => h.BatteryId == battery.Id && h.Timestamp > start && h.Timestamp <= now.Value)
+            .OrderBy(h => h.Timestamp)
+            .Select(h => new BatteryHistoryDto(h.Timestamp, Math.Round(h.PowerKw, 1), Math.Round(h.SocPct, 1)))
+            .ToListAsync();
+
+        return Ok(history);
     }
 }
