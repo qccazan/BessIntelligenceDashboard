@@ -90,6 +90,11 @@ jobs:
         working-directory: e2e
         continue-on-error: true
 
+      - name: Dump backend logs
+        if: always()
+        run: cat backend.log
+        working-directory: backend/BessIntelligence.Api
+
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
