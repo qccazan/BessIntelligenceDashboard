@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BESS Intelligence Layer — Portfolio Dashboard PoC</title>
+<style>
+  :root {
+    --bess-bg: #F5F3FF;
+    --bess-bg-deep: #EEEAFD;
+    --bess-surface: #FFFFFF;
+    --bess-border: rgba(88, 70, 180, 0.14);
+    --bess-border-strong: rgba(88, 70, 180, 0.22);
+    --bess-text: #1C1B2E;
+    --bess-text-muted: #5C5A7A;
+    --bess-text-faint: #8C8AA8;
+
+    --bess-purple-50: #F0ECFE;
+    --bess-purple-100: #DCD3FB;
+    --bess-purple-500: #7B5CF6;
+    --bess-purple-700: #4A30B5;
+    --bess-purple-900: #261761;
+
+    --bess-teal-50: #DDF7EE;
+    --bess-teal-500: #17B890;
+    --bess-teal-700: #0B7757;
+    --bess-teal-900: #053E2D;
+
+    --bess-coral-50: #FFE8DE;
+    --bess-coral-500: #FF7A3D;
+    --bess-coral-700: #B8461A;
+    --bess-coral-900: #5C210A;
+
+    --bess-pink-500: #F05B8A;
+    --bess-pink-700: #A82155;
+
+    --bess-amber-50: #FFF3D6;
+    --bess-amber-700: #9A5F06;
+
+    --bess-blue-50: #DFECFF;
+
+    --radius-md: 10px;
+    --radius-lg: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: linear-gradient(180deg, var(--bess-bg) 0%, var(--bess-bg-deep) 100%);
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--bess-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ======== LOGIN ======== */
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .login-card {
+    background: var(--bess-surface);
+    border-radius: var(--radius-lg);
+    padding: 40px 36px;
+    width: 100%; max-width: 400px;
+    border: 0.5px solid var(--bess-border);
+    box-shadow: 0 10px 40px rgba(123, 92, 246, 0.08);
+  }
+  .login-brand { display: flex; align-items: center; gap: 12px; justify-content: center; margin-bottom: 12px; }
+  .brand-mark {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: var(--bess-purple-500);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-brand-name { font-weight: 500; font-size: 17px; color: var(--bess-purple-900); }
+  .login-tag { font-size: 13px; color: var(--bess-text-muted); text-align: center; margin: 0 0 28px; line-height: 1.55; }
+  .field-label { font-size: 12px; color: var(--bess-text-muted); margin: 14px 0 6px; font-weight: 500; display: block; }
+  .field-input {
+    width: 100%; height: 40px; padding: 0 14px;
+    border: 0.5px solid var(--bess-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--bess-surface);
+    font-size: 14px; font-family: inherit; color: var(--bess-text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field-input:focus {
+    outline: none;
+    border-color: var(--bess-purple-500);
+    box-shadow: 0 0 0 3px rgba(123, 92, 246, 0.15);
+  }
+  .primary-btn {
+    width: 100%; height: 42px;
+    border: none; border-radius: var(--radius-md);
+    background: var(--bess-purple-500); color: white;
+    font-size: 14px; font-weight: 500;
+    margin-top: 22px; cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+  }
+  .primary-btn:hover { background: var(--bess-purple-700); }
+  .link-center { font-size: 12px; color: var(--bess-purple-700); text-align: center; margin: 12px 0 0; text-decoration: none; display: block; }
+  .link-center:hover { text-decoration: underline; }
+  .demo-note { font-size: 11px; color: var(--bess-text-faint); text-align: center; margin: 18px 0 0; font-style: italic; }
+
+  /* ======== DASHBOARD ======== */
+  .dash-wrap { max-width: 1280px; margin: 0 auto; padding: 20px; }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #F0ECFE 0%, #DFECFF 100%);
+    border-radius: var(--radius-lg);
+    margin-bottom: 16px;
+    border: 0.5px solid var(--bess-border);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 15px; color: var(--bess-purple-900); }
+  .user-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--bess-purple-700); }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--bess-pink-500); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 500;
+  }
+  .logout-btn {
+    background: transparent;
+    border: 0.5px solid var(--bess-border-strong);
+    color: var(--bess-purple-700);
+    font-size: 12px; padding: 6px 12px;
+    border-radius: var(--radius-md); cursor: pointer;
+    font-family: inherit; margin-left: 4px;
+  }
+  .logout-btn:hover { background: rgba(255,255,255,0.6); }
+
+  .page-header {
+    padding: 18px 20px;
+    background: var(--bess-surface);
+    border-radius: var(--radius-lg);
+    margin-bottom: 16px;
+    border: 0.5px solid var(--bess-border);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px;
+  }
+  .page-title { font-size: 20px; font-weight: 500; margin: 0 0 5px; }
+  .page-sub { font-size: 13px; color: var(--bess-text-muted); margin: 0; display: flex; align-items: center; gap: 8px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bess-teal-500); box-shadow: 0 0 0 3px rgba(23, 184, 144, 0.18); }
+
+  .portfolio-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+  .stat-chip { background: var(--bess-purple-50); padding: 8px 14px; border-radius: var(--radius-md); text-align: right; }
+  .stat-chip.teal { background: var(--bess-teal-50); }
+  .stat-chip.coral { background: var(--bess-coral-50); }
+  .stat-lbl { font-size: 10px; color: var(--bess-purple-700); margin: 0; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat-chip.teal .stat-lbl { color: var(--bess-teal-700); }
+  .stat-chip.coral .stat-lbl { color: var(--bess-coral-700); }
+  .stat-val { font-size: 16px; font-weight: 500; margin: 2px 0 0; color: var(--bess-purple-900); }
+  .stat-chip.teal .stat-val { color: var(--bess-teal-900); }
+  .stat-chip.coral .stat-val { color: var(--bess-coral-900); }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 980px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+  .card { background: var(--bess-surface); border-radius: var(--radius-lg); padding: 20px; border: 0.5px solid var(--bess-border); }
+  .card-wide { grid-column: 1 / -1; }
+
+  .card-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; gap: 8px; }
+  .card-title { font-size: 15px; font-weight: 500; margin: 0; color: var(--bess-text); }
+  .card-meta { font-size: 12px; color: var(--bess-text-faint); margin: 3px 0 0; }
+
+  .pill { font-size: 11px; padding: 5px 11px; border-radius: 999px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .pill-ai { background: var(--bess-purple-50); color: var(--bess-purple-700); }
+  .pill-charge { background: var(--bess-teal-50); color: var(--bess-teal-700); }
+  .pill-discharge { background: var(--bess-coral-50); color: var(--bess-coral-700); }
+  .pill-idle { background: #E8E6F2; color: var(--bess-text-muted); }
+  .pill-fault { background: #FFE8DE; color: var(--bess-coral-700); }
+
+  /* ===== Fleet data table ===== */
+  .fleet-table-wrap {
+    border: 0.5px solid var(--bess-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .fleet-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .fleet-table thead th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--bess-text-muted);
+    padding: 10px 14px;
+    background: var(--bess-purple-50);
+    border-bottom: 0.5px solid var(--bess-border);
+    white-space: nowrap;
+  }
+  .fleet-table thead th.align-right { text-align: right; }
+  .fleet-table tbody td {
+    padding: 12px 14px;
+    border-bottom: 0.5px solid var(--bess-border);
+    color: var(--bess-text);
+    vertical-align: middle;
+  }
+  .fleet-table tbody tr:last-child td { border-bottom: none; }
+  .fleet-table tbody tr { cursor: pointer; transition: background 0.12s; }
+  .fleet-table tbody tr:hover td { background: #FAF9FE; }
+  .fleet-table tbody tr.selected td {
+    background: #F0ECFE;
+    box-shadow: inset 3px 0 0 var(--bess-purple-500);
+  }
+
+  .td-align-right { text-align: right; }
+
+  .asset-cell { display: flex; align-items: center; gap: 10px; }
+  .asset-icon {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500;
+    color: white;
+    flex-shrink: 0;
+  }
+  .asset-icon.charge { background: var(--bess-teal-500); }
+  .asset-icon.discharge { background: var(--bess-coral-500); }
+  .asset-icon.idle { background: var(--bess-purple-500); }
+  .asset-icon.fault { background: var(--bess-pink-500); animation: faultPulse 1.5s ease-in-out infinite; }
+  @keyframes faultPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(240, 91, 138, 0.5); }
+    50% { box-shadow: 0 0 0 5px rgba(240, 91, 138, 0); }
+  }
+  .asset-text { min-width: 0; }
+  .asset-id {
+    font-size: 13px; font-weight: 500;
+    color: var(--bess-purple-900);
+    margin: 0; line-height: 1.2;
+  }
+  .asset-site {
+    font-size: 11px; color: var(--bess-text-muted);
+    margin: 2px 0 0; line-height: 1.2;
+  }
+
+  .state-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    white-space: nowrap;
+  }
+  .state-badge.charge { background: var(--bess-teal-50); color: var(--bess-teal-700); }
+  .state-badge.discharge { background: var(--bess-coral-50); color: var(--bess-coral-700); }
+  .state-badge.idle { background: #E8E6F2; color: var(--bess-text-muted); }
+  .state-badge.fault { background: #FFE4EE; color: var(--bess-pink-700); }
+  .state-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .state-badge.charge .state-dot { background: var(--bess-teal-500); }
+  .state-badge.discharge .state-dot { background: var(--bess-coral-500); }
+  .state-badge.idle .state-dot { background: var(--bess-text-faint); }
+  .state-badge.fault .state-dot { background: var(--bess-pink-500); }
+
+  .power-val-cell { font-weight: 500; }
+  .power-val-cell.c { color: var(--bess-teal-700); }
+  .power-val-cell.d { color: var(--bess-coral-700); }
+  .power-val-cell.i { color: var(--bess-text-muted); }
+
+  .soc-cell { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+  .soc-bar {
+    flex: 0 0 80px;
+    height: 6px;
+    background: var(--bess-purple-50);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+  .soc-bar-fill {
+    position: absolute; inset: 0 auto 0 0;
+    border-radius: 999px;
+    transition: width 0.5s ease-out;
+  }
+  tr.charge .soc-bar-fill { background: var(--bess-teal-500); }
+  tr.discharge .soc-bar-fill { background: var(--bess-coral-500); }
+  tr.idle .soc-bar-fill { background: var(--bess-purple-500); }
+  tr.fault .soc-bar-fill { background: var(--bess-pink-500); }
+  .soc-num {
+    font-weight: 500;
+    color: var(--bess-purple-900);
+    min-width: 36px;
+    text-align: right;
+  }
+
+  .temp-val { font-weight: 500; }
+  .temp-val.warn { color: var(--bess-coral-700); }
+  .temp-val.neutral { color: var(--bess-text); }
+
+  .soh-val { color: var(--bess-text); font-weight: 500; }
+
+  .action-cell {
+    display: flex; flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.2;
+  }
+  .action-verb { font-size: 12px; font-weight: 500; }
+  .action-verb.c { color: var(--bess-teal-700); }
+  .action-verb.d { color: var(--bess-coral-700); }
+  .action-verb.h { color: var(--bess-text-muted); }
+  .action-time { font-size: 10px; color: var(--bess-text-faint); margin-top: 2px; }
+
+  .fleet-legend {
+    display: flex; justify-content: flex-end; gap: 14px;
+    margin-top: 14px;
+    font-size: 11px; color: var(--bess-text-muted);
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 50%; }
+
+  @media (max-width: 900px) {
+    .fleet-table { font-size: 12px; }
+    .fleet-table thead th,
+    .fleet-table tbody td { padding: 10px 8px; }
+    .hide-mobile { display: none; }
+    .soc-bar { flex-basis: 50px; }
+  }
+
+  /* ===== Pagination ===== */
+  .fleet-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .page-info {
+    font-size: 12px;
+    color: var(--bess-text-muted);
+  }
+  .page-info strong {
+    color: var(--bess-purple-900);
+    font-weight: 500;
+  }
+  .page-size-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--bess-text-muted);
+  }
+  .page-size-select {
+    background: var(--bess-surface);
+    border: 0.5px solid var(--bess-border-strong);
+    border-radius: var(--radius-md);
+    padding: 4px 8px;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--bess-text);
+    cursor: pointer;
+  }
+  .page-size-select:focus {
+    outline: none;
+    border-color: var(--bess-purple-500);
+    box-shadow: 0 0 0 2px rgba(123, 92, 246, 0.15);
+  }
+  .page-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .page-btn {
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    border: 0.5px solid var(--bess-border-strong);
+    background: var(--bess-surface);
+    color: var(--bess-text);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .page-btn:hover:not(:disabled) {
+    background: var(--bess-purple-50);
+    border-color: var(--bess-purple-500);
+    color: var(--bess-purple-700);
+  }
+  .page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .page-btn.active {
+    background: var(--bess-purple-500);
+    color: white;
+    border-color: var(--bess-purple-500);
+  }
+  .page-btn.active:hover {
+    background: var(--bess-purple-700);
+    color: white;
+  }
+  .page-ellipsis {
+    color: var(--bess-text-faint);
+    font-size: 12px;
+    padding: 0 2px;
+  }
+
+  /* ===== Recommendation ===== */
+  .rec-box {
+    background: linear-gradient(135deg, var(--bess-purple-50) 0%, var(--bess-blue-50) 100%);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    border: 0.5px solid rgba(123, 92, 246, 0.2);
+  }
+  .rec-tag { font-size: 11px; color: var(--bess-purple-700); margin: 0 0 8px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+  .rec-main { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .rec-action { font-size: 22px; font-weight: 500; color: var(--bess-purple-900); }
+  .rec-window { font-size: 14px; color: var(--bess-purple-700); }
+  .rec-conf { font-size: 11px; color: white; background: var(--bess-purple-500); padding: 4px 11px; border-radius: 999px; font-weight: 500; margin-left: auto; }
+  .rec-expl { font-size: 13px; color: var(--bess-purple-700); margin: 10px 0 0; line-height: 1.55; }
+
+  .per-battery-lane-wrap {
+    position: relative;
+    margin-top: 14px;
+  }
+  .per-battery-lane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .per-battery-lane-label {
+    font-size: 11px;
+    color: var(--bess-purple-700);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0;
+  }
+  .per-battery-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .per-battery-nav-counter {
+    font-size: 11px;
+    color: var(--bess-purple-700);
+    font-variant-numeric: tabular-nums;
+    min-width: 44px;
+    text-align: center;
+  }
+  .per-battery-arrow {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 0.5px solid rgba(123, 92, 246, 0.3);
+    background: var(--bess-surface);
+    color: var(--bess-purple-700);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .per-battery-arrow:hover:not(:disabled) {
+    background: var(--bess-purple-500);
+    color: white;
+    border-color: var(--bess-purple-500);
+  }
+  .per-battery-arrow:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .per-battery-scroller {
+    overflow: hidden;
+    position: relative;
+    margin: 0 -2px;
+  }
+  .per-battery-track {
+    display: flex;
+    gap: 8px;
+    padding: 2px;
+    transition: transform 0.3s ease-out;
+  }
+  .pb-action {
+    flex: 0 0 calc((100% - 32px) / 5);
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    background: var(--bess-surface);
+    border: 0.5px solid var(--bess-border);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.12s, transform 0.12s;
+  }
+  .pb-action:hover {
+    border-color: var(--bess-border-strong);
+    transform: translateY(-1px);
+  }
+  .pb-action.charge { border-color: rgba(23, 184, 144, 0.35); background: rgba(221, 247, 238, 0.5); }
+  .pb-action.discharge { border-color: rgba(255, 122, 61, 0.35); background: rgba(255, 232, 222, 0.5); }
+  .pb-action.hold { border-color: rgba(88, 70, 180, 0.18); }
+  .pb-action.selected {
+    border: 2px solid var(--bess-purple-500);
+    padding: 7px 9px;
+  }
+  .pb-name { font-size: 10px; color: var(--bess-text-faint); margin: 0 0 3px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pb-verb { font-size: 12px; font-weight: 500; margin: 0; white-space: nowrap; }
+  .pb-verb.c { color: var(--bess-teal-700); }
+  .pb-verb.d { color: var(--bess-coral-700); }
+  .pb-verb.h { color: var(--bess-text-muted); }
+  .pb-sub { font-size: 10px; color: var(--bess-text-faint); margin: 2px 0 0; white-space: nowrap; }
+
+  @media (max-width: 780px) {
+    .pb-action { flex: 0 0 calc((100% - 24px) / 4); }
+  }
+  @media (max-width: 560px) {
+    .pb-action { flex: 0 0 calc((100% - 16px) / 3); }
+  }
+
+  .tick-row { display: flex; justify-content: space-between; font-size: 10px; color: var(--bess-text-faint); padding: 0 4px; margin-top: 6px; }
+
+  /* ===== Selected detail ===== */
+  .selected-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--bess-purple-50);
+    border-radius: var(--radius-md);
+    margin-bottom: 14px;
+  }
+  .selected-pill { font-size: 11px; font-weight: 500; padding: 3px 8px; background: var(--bess-purple-500); color: white; border-radius: 999px; }
+  .selected-name { font-size: 13px; font-weight: 500; color: var(--bess-purple-900); }
+  .selected-site { font-size: 12px; color: var(--bess-purple-700); margin-left: auto; }
+
+  .selected-specs {
+    display: flex;
+    gap: 14px;
+    margin: -8px 0 14px;
+    padding: 0 4px;
+    font-size: 11px;
+    color: var(--bess-text-muted);
+    flex-wrap: wrap;
+  }
+  .selected-specs span strong {
+    color: var(--bess-purple-900);
+    font-weight: 500;
+  }
+  .chemistry-badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: var(--bess-purple-50);
+    color: var(--bess-purple-700);
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.03em;
+  }
+
+  .soc-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+  .ring-wrap { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+  .ring-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring-val { font-size: 24px; font-weight: 500; line-height: 1; color: var(--bess-purple-900); }
+  .ring-lbl { font-size: 11px; color: var(--bess-text-muted); margin-top: 3px; }
+  .soc-info { flex: 1; min-width: 0; }
+  .asset-name { font-size: 14px; font-weight: 500; margin: 0 0 6px; color: var(--bess-text); }
+  .power-val { font-size: 22px; font-weight: 500; }
+  .power-val.c { color: var(--bess-teal-700); }
+  .power-val.d { color: var(--bess-coral-700); }
+  .power-val.i { color: var(--bess-text-muted); }
+  .power-lbl { font-size: 12px; color: var(--bess-text-muted); margin-left: 4px; }
+
+  .metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .metric { background: var(--bess-teal-50); border-radius: var(--radius-md); padding: 12px 14px; }
+  .metric.amber { background: var(--bess-amber-50); }
+  .metric-label { font-size: 11px; color: var(--bess-teal-700); margin: 0 0 3px; }
+  .metric.amber .metric-label { color: var(--bess-amber-700); }
+  .metric-value { font-size: 22px; font-weight: 500; margin: 0; line-height: 1.2; color: var(--bess-teal-900); }
+  .metric.amber .metric-value { color: var(--bess-coral-900); }
+  .metric-unit { font-size: 13px; opacity: 0.7; margin-left: 3px; font-weight: 400; }
+
+  /* ===== 24h replay ===== */
+  .readout-24 { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; flex-wrap: wrap; }
+  .time-24 { font-size: 24px; font-weight: 500; color: var(--bess-purple-900); font-variant-numeric: tabular-nums; }
+  .readout-meta { font-size: 13px; color: var(--bess-purple-700); }
+  .chart-24 { position: relative; width: 100%; height: 130px; margin-top: 4px; }
+  .chart-24 svg { display: block; width: 100%; height: 100%; }
+  .play-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  .play-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: none; background: var(--bess-purple-500); color: white;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; padding: 0; transition: background 0.15s;
+  }
+  .play-btn:hover { background: var(--bess-purple-700); }
+  .scrub { flex: 1; height: 6px; background: var(--bess-purple-50); border-radius: 999px; position: relative; overflow: hidden; cursor: pointer; }
+  .scrub-fill {
+    position: absolute; inset: 0 auto 0 0;
+    background: linear-gradient(90deg, var(--bess-teal-500), var(--bess-purple-500), var(--bess-coral-500));
+    border-radius: 999px; width: 0%;
+    transition: width 60ms linear;
+  }
+  .summary-24 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+  .sum-chip { background: var(--bess-purple-50); padding: 10px 12px; border-radius: var(--radius-md); }
+  .sum-chip.teal { background: var(--bess-teal-50); }
+  .sum-chip.coral { background: var(--bess-coral-50); }
+  .sum-lbl { font-size: 11px; color: var(--bess-purple-700); margin: 0 0 3px; }
+  .sum-chip.teal .sum-lbl { color: var(--bess-teal-700); }
+  .sum-chip.coral .sum-lbl { color: var(--bess-coral-700); }
+  .sum-val { font-size: 15px; font-weight: 500; margin: 0; color: var(--bess-purple-900); }
+  .sum-chip.teal .sum-val { color: var(--bess-teal-900); }
+  .sum-chip.coral .sum-val { color: var(--bess-coral-900); }
+
+  .footer-note { text-align: center; font-size: 11px; color: var(--bess-text-faint); margin: 20px 0 10px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div id="view-login" class="view active">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-mark">
+          <svg width="16" height="16" viewBox="0 0 14 14" fill="none"><path d="M5.5 1L2 7.5H5L4 12.5L9 6H6L7.5 1H5.5Z" fill="white"/></svg>
+        </div>
+        <span class="login-brand-name">BESS Intelligence</span>
+      </div>
+      <p class="login-tag">AI-augmented battery intelligence,<br/>on top of your monitoring platform</p>
+      <label class="field-label" for="email">Email</label>
+      <input class="field-input" type="email" id="email" value="alex@qubiz.com" />
+      <label class="field-label" for="password">Password</label>
+      <input class="field-input" type="password" id="password" value="password123" />
+      <button class="primary-btn" onclick="showDashboard()">Sign in</button>
+      <a href="#" class="link-center" onclick="event.preventDefault()">Forgot password?</a>
+      <p class="demo-note">Demo build — no authentication is performed</p>
+    </div>
+  </div>
+</div>
+
+<div id="view-dashboard" class="view">
+  <div class="dash-wrap">
+
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg width="16" height="16" viewBox="0 0 14 14" fill="none"><path d="M5.5 1L2 7.5H5L4 12.5L9 6H6L7.5 1H5.5Z" fill="white"/></svg>
+        </div>
+        <span>BESS Intelligence</span>
+      </div>
+      <div class="user-row">
+        <span>Alex Pereira</span>
+        <div class="avatar">AP</div>
+        <button class="logout-btn" onclick="showLogin()">Sign out</button>
+      </div>
+    </div>
+
+      <div class="page-header">
+        <div>
+          <p class="page-title">My battery portfolio</p>
+          <p class="page-sub"><span class="status-dot"></span>12 assets online · Last sync 12 seconds ago</p>
+        </div>
+        <div class="portfolio-stats">
+          <div class="stat-chip">
+            <p class="stat-lbl">Total capacity</p>
+            <p class="stat-val">11.2 MWh</p>
+          </div>
+          <div class="stat-chip teal">
+            <p class="stat-lbl">Available now</p>
+            <p class="stat-val" id="total-available">6.48 MWh</p>
+          </div>
+          <div class="stat-chip coral">
+            <p class="stat-lbl">Net power</p>
+            <p class="stat-val" id="total-power">−465 kW</p>
+          </div>
+        </div>
+      </div>
+
+    <div class="grid">
+
+      <div class="card card-wide">
+        <div class="card-head">
+          <div>
+            <p class="card-title">Fleet overview</p>
+            <p class="card-meta">12 assets · click a row to drill in</p>
+          </div>
+          <span class="pill pill-ai">12 assets · live</span>
+        </div>
+
+        <div class="fleet-table-wrap">
+          <table class="fleet-table">
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>State</th>
+                <th class="align-right">Power</th>
+                <th class="align-right">State of charge</th>
+                <th class="align-right hide-mobile">SoH</th>
+                <th class="align-right hide-mobile">Temp</th>
+                <th class="align-right">Next action</th>
+              </tr>
+            </thead>
+            <tbody id="fleet-rows"></tbody>
+          </table>
+        </div>
+
+        <div class="fleet-pagination">
+          <div class="page-info" id="page-info">Showing <strong>1–5</strong> of <strong>12</strong> assets</div>
+          <div class="page-size-wrap">
+            <span>Show</span>
+            <select class="page-size-select" id="page-size-select">
+              <option value="5" selected>5</option>
+              <option value="10">10</option>
+              <option value="25">25</option>
+            </select>
+            <span>per page</span>
+          </div>
+          <div class="page-controls" id="page-controls"></div>
+        </div>
+
+        <div class="fleet-legend">
+          <div class="legend-item"><span class="legend-swatch" style="background: var(--bess-teal-500);"></span>Charging</div>
+          <div class="legend-item"><span class="legend-swatch" style="background: var(--bess-coral-500);"></span>Discharging</div>
+          <div class="legend-item"><span class="legend-swatch" style="background: var(--bess-purple-500);"></span>Idle</div>
+          <div class="legend-item"><span class="legend-swatch" style="background: var(--bess-pink-500);"></span>Fault</div>
+        </div>
+      </div>
+
+      <div class="card card-wide">
+        <div class="card-head">
+          <div>
+            <p class="card-title">Market forecast — next 24 hours</p>
+            <p class="card-meta">Day-ahead prices · Portfolio recommendation · Updated 14:02</p>
+          </div>
+          <span class="pill pill-ai">AI active</span>
+        </div>
+
+        <div class="rec-box">
+          <p class="rec-tag">Portfolio recommendation</p>
+          <div class="rec-main">
+            <span class="rec-action">Coordinated charge</span>
+            <span class="rec-window">tonight, 02:00 – 05:00 · ~31 €/MWh</span>
+            <span class="rec-conf">82% confidence</span>
+          </div>
+          <p class="rec-expl">Prices drop 38% overnight to the lowest window of the next 24 hours, then peak at ~178 €/MWh around 18:00 — a 5.7× spread across the full portfolio. Estimated capture: ~€1,620 for the coordinated cycle at current fleet capacity.</p>
+          <div class="per-battery-lane-wrap">
+            <div class="per-battery-lane-header">
+              <p class="per-battery-lane-label">Per-battery actions</p>
+              <div class="per-battery-nav">
+                <button class="per-battery-arrow" id="pb-prev" aria-label="Previous">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5 L4 6 L7.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <span class="per-battery-nav-counter" id="pb-counter">1–5 / 12</span>
+                <button class="per-battery-arrow" id="pb-next" aria-label="Next">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 2.5 L8 6 L4.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="per-battery-scroller" id="pb-scroller">
+              <div class="per-battery-track" id="per-battery-strip"></div>
+            </div>
+          </div>
+        </div>
+
+        <svg viewBox="0 0 600 160" width="100%" height="180" preserveAspectRatio="none" style="display: block;">
+          <defs>
+            <linearGradient id="priceArea" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#7B5CF6" stop-opacity="0.32"/>
+              <stop offset="100%" stop-color="#7B5CF6" stop-opacity="0.02"/>
+            </linearGradient>
+            <pattern id="chargeZone" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="6" height="6" fill="#DDF7EE"/>
+              <line x1="0" y1="0" x2="0" y2="6" stroke="#17B890" stroke-width="1" opacity="0.35"/>
+            </pattern>
+            <pattern id="dischargeZone" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="6" height="6" fill="#FFE8DE"/>
+              <line x1="0" y1="0" x2="0" y2="6" stroke="#FF7A3D" stroke-width="1" opacity="0.4"/>
+            </pattern>
+          </defs>
+          <rect x="60" y="15" width="70" height="125" fill="url(#chargeZone)" rx="4"/>
+          <rect x="420" y="15" width="55" height="125" fill="url(#dischargeZone)" rx="4"/>
+          <text x="95" y="28" text-anchor="middle" font-size="10" fill="#0B7757" font-weight="500">CHARGE</text>
+          <text x="447" y="28" text-anchor="middle" font-size="10" fill="#B8461A" font-weight="500">DISCHARGE</text>
+          <line x1="30" y1="140" x2="580" y2="140" stroke="#DCD3FB" stroke-width="0.5"/>
+          <line x1="30" y1="95" x2="580" y2="95" stroke="#DCD3FB" stroke-width="0.5" stroke-dasharray="2,3"/>
+          <line x1="30" y1="50" x2="580" y2="50" stroke="#DCD3FB" stroke-width="0.5" stroke-dasharray="2,3"/>
+          <text x="26" y="143" text-anchor="end" font-size="9" fill="#8C8AA8">0</text>
+          <text x="26" y="98" text-anchor="end" font-size="9" fill="#8C8AA8">100</text>
+          <text x="26" y="53" text-anchor="end" font-size="9" fill="#8C8AA8">200</text>
+          <path d="M 30 120 L 60 125 L 95 132 L 130 128 L 165 115 L 200 108 L 235 102 L 270 95 L 305 88 L 340 78 L 375 68 L 410 55 L 447 32 L 475 38 L 510 60 L 545 85 L 580 110 Z" fill="url(#priceArea)"/>
+          <path d="M 30 120 L 60 125 L 95 132 L 130 128 L 165 115 L 200 108 L 235 102 L 270 95 L 305 88 L 340 78 L 375 68 L 410 55 L 447 32 L 475 38 L 510 60 L 545 85 L 580 110" fill="none" stroke="#7B5CF6" stroke-width="1.8" stroke-linejoin="round"/>
+          <circle cx="95" cy="132" r="4" fill="#17B890" stroke="white" stroke-width="1.5"/>
+          <circle cx="447" cy="32" r="4" fill="#FF7A3D" stroke="white" stroke-width="1.5"/>
+        </svg>
+        <div class="tick-row">
+          <span>14:00</span><span>18:00</span><span>22:00</span><span>02:00</span><span>06:00</span><span>10:00</span><span>14:00</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <p class="card-title">Current state — selected battery</p>
+            <p class="card-meta">Live · 5s refresh</p>
+          </div>
+          <span class="pill" id="state-pill-sel"></span>
+        </div>
+
+        <div class="selected-header">
+          <span class="selected-pill">Selected</span>
+          <span class="selected-name" id="sel-name">BESS-01</span>
+          <span class="selected-site" id="sel-site">Site A · Oradea</span>
+        </div>
+
+        <div class="selected-specs" id="sel-specs">
+          <span><span class="chemistry-badge">LFP</span></span>
+          <span>Power rating <strong id="sel-power-rating">500 kW</strong></span>
+          <span>Capacity <strong id="sel-capacity">1,000 kWh</strong></span>
+          <span>Duration <strong id="sel-duration">2.0 h</strong></span>
+        </div>
+
+        <div class="soc-row">
+          <div class="ring-wrap">
+            <svg width="100" height="100" viewBox="0 0 92 92">
+              <circle cx="46" cy="46" r="38" fill="none" stroke="#F0ECFE" stroke-width="9"/>
+              <circle id="sel-soc-ring" cx="46" cy="46" r="38" fill="none" stroke="#7B5CF6" stroke-width="9" stroke-linecap="round" stroke-dasharray="131.3 238.8" transform="rotate(-90 46 46)"/>
+            </svg>
+            <div class="ring-text">
+              <span class="ring-val" id="sel-soc">55%</span>
+              <span class="ring-lbl">SoC</span>
+            </div>
+          </div>
+          <div class="soc-info">
+            <p class="asset-name" id="sel-asset">BESS-01 · Site A</p>
+            <div>
+              <span class="power-val d" id="sel-power">−42.3</span>
+              <span class="power-lbl" id="sel-power-lbl">kW (discharging)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric">
+            <p class="metric-label">State of health</p>
+            <p class="metric-value" id="sel-soh">97<span class="metric-unit">%</span></p>
+          </div>
+          <div class="metric amber">
+            <p class="metric-label">Temperature</p>
+            <p class="metric-value" id="sel-temp">24.8<span class="metric-unit">°C</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <p class="card-title">Last 24 hours — replay</p>
+            <p class="card-meta">Selected battery · Watch the day unfold</p>
+          </div>
+          <span class="pill pill-charge" id="state-pill-24">
+            <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="#17B890"/></svg>
+            <span id="state-txt-24">Charging</span>
+          </span>
+        </div>
+
+        <div class="readout-24">
+          <span class="time-24" id="time-24">14:00</span>
+          <span class="readout-meta">SoC <strong id="soc-24">38%</strong> · Power <strong id="power-24" style="color: var(--bess-text-muted);">0.0 kW</strong></span>
+        </div>
+
+        <div class="chart-24">
+          <svg viewBox="0 0 320 110" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="socGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#7B5CF6" stop-opacity="0.22"/>
+                <stop offset="100%" stop-color="#7B5CF6" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <line x1="0" y1="55" x2="320" y2="55" stroke="#DCD3FB" stroke-width="0.5"/>
+            <g id="bars-group"></g>
+            <path id="soc-area" d="" fill="url(#socGrad)"/>
+            <path id="soc-line" d="" fill="none" stroke="#7B5CF6" stroke-width="1.6" stroke-linejoin="round"/>
+            <line id="playhead" x1="0" y1="5" x2="0" y2="105" stroke="#F05B8A" stroke-width="1.2" opacity="0.85"/>
+            <circle id="playhead-dot" cx="0" cy="55" r="3.5" fill="#F05B8A" stroke="white" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="tick-row">
+          <span>14:00</span><span>20:00</span><span>02:00</span><span>08:00</span><span>14:00</span>
+        </div>
+
+        <div class="play-row">
+          <button class="play-btn" id="play-btn" aria-label="Play">
+            <svg id="play-icon" width="14" height="14" viewBox="0 0 12 12" fill="white"><path d="M3 2 L10 6 L3 10 Z"/></svg>
+          </button>
+          <div class="scrub" id="scrub">
+            <div class="scrub-fill" id="scrub-fill"></div>
+          </div>
+        </div>
+
+        <div class="summary-24">
+          <div class="sum-chip teal">
+            <p class="sum-lbl">Charged</p>
+            <p class="sum-val" id="sum-charged">248 kWh</p>
+          </div>
+          <div class="sum-chip coral">
+            <p class="sum-lbl">Discharged</p>
+            <p class="sum-val" id="sum-discharged">231 kWh</p>
+          </div>
+          <div class="sum-chip">
+            <p class="sum-lbl">Net cycles</p>
+            <p class="sum-val" id="sum-cycles">6.1×</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="footer-note">BESS Intelligence Layer — PoC mockup · Synthetic data · Read-only overlay on Withthegrid</p>
+  </div>
+</div>
+
+<script>
+var FLEET = [
+  { id: 'BESS-01', site: 'Site A · Oradea',    chemistry: 'LFP', powerRating: 500, capacity: 1000, soc: 55, soh: 97, temp: 24.8, power: -84.6, mode: 'discharging', nextAction: 'Charge', nextWindow: '02:00' },
+  { id: 'BESS-02', site: 'Site B · Cluj',      chemistry: 'LFP', powerRating: 500, capacity: 1000, soc: 82, soh: 95, temp: 26.1, power: -77.0, mode: 'discharging', nextAction: 'Charge', nextWindow: '02:00' },
+  { id: 'BESS-03', site: 'Site C · Timișoara', chemistry: 'LFP', powerRating: 400, capacity:  800, soc: 68, soh: 98, temp: 23.4, power: -48.0, mode: 'discharging', nextAction: 'Charge', nextWindow: '02:00' },
+  { id: 'BESS-04', site: 'Site D · Arad',      chemistry: 'LFP', powerRating: 500, capacity: 1000, soc: 41, soh: 92, temp: 27.6, power:   0.4, mode: 'idle',        nextAction: 'Charge', nextWindow: '02:30' },
+  { id: 'BESS-05', site: 'Site E · Oradea',    chemistry: 'LFP', powerRating: 500, capacity: 1000, soc: 12, soh: 88, temp: 29.2, power:   0.0, mode: 'fault',       nextAction: 'Hold',   nextWindow: '—' },
+  { id: 'BESS-06', site: 'Site F · Cluj',      chemistry: 'LFP', powerRating: 500, capacity: 1000, soc: 74, soh: 96, temp: 25.3, power: -71.6, mode: 'discharging', nextAction: 'Charge', nextWindow: '02:00' },
+  { id: 'BESS-07', site: 'Site G · Satu Mare', chemistry: 'LFP', powerRating: 400, capacity:  800, soc: 58, soh: 94, temp: 24.1, power: -42.4, mode: 'discharging', nextAction: 'Charge', nextWindow: '02:15' },
+  { id: 'BESS-08', site: 'Site H · Bihor',     chemistry: 'LFP', powerRating: 500, capacity: 1000, soc: 89, soh: 99, temp: 23.8, power:   0.2, mode: 'idle',        nextAction: 'Discharge', nextWindow: '18:00' },
+  { id: 'BESS-09', site: 'Site I · Arad',      chemistry: 'LFP', powerRating: 400, capacity:  800, soc: 33, soh: 91, temp: 26.8, power:   0.0, mode: 'idle',        nextAction: 'Charge', nextWindow: '02:30' },
+  { id: 'BESS-10', site: 'Site J · Timișoara', chemistry: 'LFP', powerRating: 500, capacity: 1000, soc: 64, soh: 96, temp: 25.7, power: -57.8, mode: 'discharging', nextAction: 'Charge', nextWindow: '02:00' },
+  { id: 'BESS-11', site: 'Site K · Oradea',    chemistry: 'LFP', powerRating: 500, capacity: 1000, soc: 47, soh: 93, temp: 24.5, power: +36.0, mode: 'charging',    nextAction: 'Discharge', nextWindow: '18:15' },
+  { id: 'BESS-12', site: 'Site L · Cluj',      chemistry: 'LFP', powerRating: 400, capacity:  800, soc: 71, soh: 97, temp: 25.1, power: -52.8, mode: 'discharging', nextAction: 'Charge', nextWindow: '02:00' }
+];
+
+var selectedIdx = 0;
+var currentPage = 1;
+var pageSize = 5;
+var pbOffset = 0;
+var pbVisible = 5;
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function renderList() {
+  var container = document.getElementById('fleet-rows');
+  container.innerHTML = '';
+
+  var totalPages = Math.max(1, Math.ceil(FLEET.length / pageSize));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  var startIdx = (currentPage - 1) * pageSize;
+  var endIdx = Math.min(startIdx + pageSize, FLEET.length);
+
+  for (var i = startIdx; i < endIdx; i++) {
+    var b = FLEET[i];
+    var tr = document.createElement('tr');
+    tr.className = b.mode + (i === selectedIdx ? ' selected' : '');
+    (function(idx) { tr.onclick = function() { selectBattery(idx); }; })(i);
+
+    var num = b.id.split('-')[1];
+    var powerTxt, powerClass;
+    if (b.mode === 'fault') { powerTxt = 'offline'; powerClass = 'i'; }
+    else if (b.mode === 'idle') { powerTxt = '0.0 kW'; powerClass = 'i'; }
+    else if (b.power > 0) { powerTxt = '+' + b.power.toFixed(1) + ' kW'; powerClass = 'c'; }
+    else { powerTxt = b.power.toFixed(1) + ' kW'; powerClass = 'd'; }
+
+    var actionLetter = b.nextAction === 'Charge' ? 'c' : b.nextAction === 'Discharge' ? 'd' : 'h';
+    var tempClass = b.temp >= 28 ? 'warn' : 'neutral';
+
+    tr.innerHTML =
+      '<td>' +
+        '<div class="asset-cell">' +
+          '<div class="asset-icon ' + b.mode + '">' + num + '</div>' +
+          '<div class="asset-text">' +
+            '<p class="asset-id">' + b.id + '</p>' +
+            '<p class="asset-site">' + b.site + '</p>' +
+          '</div>' +
+        '</div>' +
+      '</td>' +
+      '<td><span class="state-badge ' + b.mode + '"><span class="state-dot"></span>' + capitalize(b.mode) + '</span></td>' +
+      '<td class="td-align-right"><span class="power-val-cell ' + powerClass + '">' + powerTxt + '</span></td>' +
+      '<td class="td-align-right">' +
+        '<div class="soc-cell">' +
+          '<div class="soc-bar"><div class="soc-bar-fill" style="width: ' + b.soc + '%;"></div></div>' +
+          '<span class="soc-num">' + Math.round(b.soc) + '%</span>' +
+        '</div>' +
+      '</td>' +
+      '<td class="td-align-right hide-mobile"><span class="soh-val">' + Math.round(b.soh) + '%</span></td>' +
+      '<td class="td-align-right hide-mobile"><span class="temp-val ' + tempClass + '">' + b.temp.toFixed(1) + '°C</span></td>' +
+      '<td class="td-align-right">' +
+        '<div class="action-cell">' +
+          '<span class="action-verb ' + actionLetter + '">' + b.nextAction + '</span>' +
+          '<span class="action-time">' + b.nextWindow + '</span>' +
+        '</div>' +
+      '</td>';
+
+    container.appendChild(tr);
+  }
+
+  renderPagination(totalPages, startIdx, endIdx);
+}
+
+function renderPagination(totalPages, startIdx, endIdx) {
+  var info = document.getElementById('page-info');
+  info.innerHTML = 'Showing <strong>' + (startIdx + 1) + '–' + endIdx + '</strong> of <strong>' + FLEET.length + '</strong> assets';
+
+  var controls = document.getElementById('page-controls');
+  controls.innerHTML = '';
+
+  var prev = document.createElement('button');
+  prev.className = 'page-btn';
+  prev.innerHTML = '&lsaquo;';
+  prev.setAttribute('aria-label', 'Previous page');
+  prev.disabled = currentPage === 1;
+  prev.onclick = function() { if (currentPage > 1) { currentPage--; renderList(); } };
+  controls.appendChild(prev);
+
+  var pagesToShow = buildPageList(currentPage, totalPages);
+  pagesToShow.forEach(function(p) {
+    if (p === '…') {
+      var el = document.createElement('span');
+      el.className = 'page-ellipsis';
+      el.textContent = '…';
+      controls.appendChild(el);
+    } else {
+      var btn = document.createElement('button');
+      btn.className = 'page-btn' + (p === currentPage ? ' active' : '');
+      btn.textContent = p;
+      (function(pn) { btn.onclick = function() { currentPage = pn; renderList(); }; })(p);
+      controls.appendChild(btn);
+    }
+  });
+
+  var next = document.createElement('button');
+  next.className = 'page-btn';
+  next.innerHTML = '&rsaquo;';
+  next.setAttribute('aria-label', 'Next page');
+  next.disabled = currentPage === totalPages;
+  next.onclick = function() { if (currentPage < totalPages) { currentPage++; renderList(); } };
+  controls.appendChild(next);
+}
+
+function buildPageList(current, total) {
+  if (total <= 7) {
+    var arr = [];
+    for (var i = 1; i <= total; i++) arr.push(i);
+    return arr;
+  }
+  var pages = [1];
+  if (current > 3) pages.push('…');
+  var startP = Math.max(2, current - 1);
+  var endP = Math.min(total - 1, current + 1);
+  for (var j = startP; j <= endP; j++) pages.push(j);
+  if (current < total - 2) pages.push('…');
+  pages.push(total);
+  return pages;
+}
+
+function renderActions() {
+  var track = document.getElementById('per-battery-strip');
+  track.innerHTML = '';
+  FLEET.forEach(function(b, i) {
+    var cls = 'hold', letter = 'h';
+    if (b.nextAction === 'Charge') { cls = 'charge'; letter = 'c'; }
+    else if (b.nextAction === 'Discharge') { cls = 'discharge'; letter = 'd'; }
+    var div = document.createElement('div');
+    div.className = 'pb-action ' + cls + (i === selectedIdx ? ' selected' : '');
+    (function(idx) { div.onclick = function() { selectBattery(idx); }; })(i);
+    div.innerHTML =
+      '<p class="pb-name">' + b.id + '</p>' +
+      '<p class="pb-verb ' + letter + '">' + b.nextAction + '</p>' +
+      '<p class="pb-sub">' + b.nextWindow + '</p>';
+    track.appendChild(div);
+  });
+  updatePbVisible();
+  applyPbOffset();
+}
+
+function updatePbVisible() {
+  var w = window.innerWidth;
+  if (w <= 560) pbVisible = 3;
+  else if (w <= 780) pbVisible = 4;
+  else pbVisible = 5;
+  if (pbOffset > Math.max(0, FLEET.length - pbVisible)) {
+    pbOffset = Math.max(0, FLEET.length - pbVisible);
+  }
+}
+
+function applyPbOffset() {
+  var track = document.getElementById('per-battery-strip');
+  if (!track) return;
+  var offsetPct = (pbOffset / pbVisible) * 100;
+  track.style.transform = 'translateX(-' + offsetPct + '%)';
+
+  var counter = document.getElementById('pb-counter');
+  var first = pbOffset + 1;
+  var last = Math.min(pbOffset + pbVisible, FLEET.length);
+  counter.textContent = first + '–' + last + ' / ' + FLEET.length;
+
+  var prevBtn = document.getElementById('pb-prev');
+  var nextBtn = document.getElementById('pb-next');
+  prevBtn.disabled = pbOffset === 0;
+  nextBtn.disabled = pbOffset >= FLEET.length - pbVisible;
+}
+
+function movePbLane(direction) {
+  var maxOffset = Math.max(0, FLEET.length - pbVisible);
+  pbOffset = Math.max(0, Math.min(maxOffset, pbOffset + direction * pbVisible));
+  applyPbOffset();
+}
+
+function scrollPbToSelected() {
+  if (selectedIdx < pbOffset) {
+    pbOffset = selectedIdx;
+  } else if (selectedIdx >= pbOffset + pbVisible) {
+    pbOffset = selectedIdx - pbVisible + 1;
+  }
+  applyPbOffset();
+}
+
+function renderPortfolioStats() {
+  var totalAvail = FLEET.reduce(function(a, b) { return a + b.capacity * b.soc / 100; }, 0);
+  var netPower = FLEET.reduce(function(a, b) { return a + b.power; }, 0);
+  document.getElementById('total-available').textContent = (totalAvail / 1000).toFixed(2) + ' MWh';
+  var sign = netPower >= 0 ? '+' : '−';
+  document.getElementById('total-power').textContent = sign + Math.abs(netPower).toFixed(0) + ' kW';
+}
+
+function renderSelected() {
+  var b = FLEET[selectedIdx];
+  document.getElementById('sel-name').textContent = b.id;
+  document.getElementById('sel-site').textContent = b.site;
+  document.getElementById('sel-asset').textContent = b.id + ' · ' + b.site.split(' · ')[0];
+  document.getElementById('sel-soc').textContent = Math.round(b.soc) + '%';
+  document.getElementById('sel-soh').innerHTML = Math.round(b.soh) + '<span class="metric-unit">%</span>';
+  document.getElementById('sel-temp').innerHTML = b.temp.toFixed(1) + '<span class="metric-unit">°C</span>';
+
+  document.getElementById('sel-power-rating').textContent = b.powerRating + ' kW';
+  document.getElementById('sel-capacity').textContent = b.capacity.toLocaleString() + ' kWh';
+  document.getElementById('sel-duration').textContent = (b.capacity / b.powerRating).toFixed(1) + ' h';
+
+  var ring = document.getElementById('sel-soc-ring');
+  var fullDash = 2 * Math.PI * 38;
+  ring.setAttribute('stroke-dasharray', (fullDash * b.soc / 100).toFixed(1) + ' ' + fullDash.toFixed(1));
+
+  var pwrEl = document.getElementById('sel-power');
+  var pwrLbl = document.getElementById('sel-power-lbl');
+  if (b.mode === 'charging') {
+    pwrEl.textContent = '+' + b.power.toFixed(1);
+    pwrEl.className = 'power-val c';
+    pwrLbl.textContent = 'kW (charging)';
+  } else if (b.mode === 'discharging') {
+    pwrEl.textContent = b.power.toFixed(1);
+    pwrEl.className = 'power-val d';
+    pwrLbl.textContent = 'kW (discharging)';
+  } else if (b.mode === 'fault') {
+    pwrEl.textContent = '—';
+    pwrEl.className = 'power-val d';
+    pwrLbl.textContent = 'offline · fault';
+  } else {
+    pwrEl.textContent = '0.0';
+    pwrEl.className = 'power-val i';
+    pwrLbl.textContent = 'kW (idle)';
+  }
+
+  var pill = document.getElementById('state-pill-sel');
+  pill.className = 'pill';
+  var modeLabel = capitalize(b.mode);
+  var dotColor = b.mode === 'charging' ? '#17B890'
+                : b.mode === 'discharging' ? '#FF7A3D'
+                : b.mode === 'fault' ? '#F05B8A'
+                : '#8C8AA8';
+  pill.classList.add(
+    b.mode === 'charging' ? 'pill-charge'
+    : b.mode === 'discharging' ? 'pill-discharge'
+    : b.mode === 'fault' ? 'pill-fault'
+    : 'pill-idle'
+  );
+  pill.innerHTML = '<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="' + dotColor + '"/></svg>' + modeLabel;
+}
+
+function selectBattery(i) {
+  selectedIdx = i;
+  currentPage = Math.floor(i / pageSize) + 1;
+  renderList();
+  renderActions();
+  scrollPbToSelected();
+  renderSelected();
+  regenerate24h();
+  renderReplay();
+}
+
+var N = 96;
+var startHour = 14;
+var power24 = new Array(N);
+var soc24 = new Array(N);
+var barEls = [];
+
+function regenerate24h() {
+  var b = FLEET[selectedIdx];
+  var s = Math.max(15, b.soc - 20 + Math.random() * 10);
+  var seed = selectedIdx * 0.7;
+  var scale = b.powerRating / 500;
+  for (var i = 0; i < N; i++) {
+    var h = (startHour + i * 0.25) % 24;
+    var p = 0;
+    if (b.mode === 'fault' && i > N * 0.85) { p = 0; }
+    else if (h >= 18 && h < 21) p = -(140 + Math.sin((h - 18) / 3 * Math.PI + seed) * 80 + (Math.random() - 0.5) * 20) * scale;
+    else if (h >= 2 && h < 5) p = (180 + Math.sin((h - 2) / 3 * Math.PI + seed) * 70 + (Math.random() - 0.5) * 20) * scale;
+    else if (h >= 8 && h < 10.5) p = -(70 + Math.sin((h - 8) / 2.5 * Math.PI + seed) * 35 + (Math.random() - 0.5) * 12) * scale;
+    else p = (Math.random() - 0.5) * 6 * scale;
+    power24[i] = p;
+    s += (p * 0.25) / b.capacity * 100;
+    if (s > 95) s = 95;
+    if (s < 15) s = 15;
+    soc24[i] = s;
+  }
+
+  var charged = 0, discharged = 0;
+  for (var j = 0; j < N; j++) {
+    if (power24[j] > 1) charged += power24[j] * 0.25;
+    else if (power24[j] < -1) discharged += -power24[j] * 0.25;
+  }
+  document.getElementById('sum-charged').textContent = Math.round(charged).toLocaleString() + ' kWh';
+  document.getElementById('sum-discharged').textContent = Math.round(discharged).toLocaleString() + ' kWh';
+  var cycles = ((charged + discharged) / 2 / b.capacity).toFixed(1);
+  document.getElementById('sum-cycles').textContent = cycles + '×';
+}
+
+function renderReplay() {
+  var b = FLEET[selectedIdx];
+  var W = 320, H = 110;
+  var zeroY = 55;
+  var barW = W / N;
+  var maxAbs = b.powerRating * 0.6;
+
+  var barsGroup = document.getElementById('bars-group');
+  barsGroup.innerHTML = '';
+  barEls = [];
+  for (var j = 0; j < N; j++) {
+    var p = power24[j];
+    var hh = Math.abs(p) / maxAbs * 42;
+    if (hh < 0.6 && Math.abs(p) > 0.2) hh = 0.6;
+    var y = p >= 0 ? zeroY - hh : zeroY;
+    var color = p > 1 ? '#17B890' : (p < -1 ? '#FF7A3D' : '#DCD3FB');
+    var r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    r.setAttribute('x', (j * barW + 0.3).toFixed(2));
+    r.setAttribute('y', y.toFixed(2));
+    r.setAttribute('width', Math.max(barW - 0.6, 0.8).toFixed(2));
+    r.setAttribute('height', hh.toFixed(2));
+    r.setAttribute('fill', color);
+    r.setAttribute('opacity', '0.25');
+    barsGroup.appendChild(r);
+    barEls.push(r);
+  }
+
+  var socPath = '';
+  for (var k = 0; k < N; k++) {
+    var x = (k / (N - 1)) * W;
+    var y = H - 8 - (soc24[k] / 100) * (H - 16);
+    socPath += (k === 0 ? 'M ' : ' L ') + x.toFixed(2) + ' ' + y.toFixed(2);
+  }
+  var socArea = socPath + ' L ' + W + ' ' + H + ' L 0 ' + H + ' Z';
+  document.getElementById('soc-line').setAttribute('d', socPath);
+  document.getElementById('soc-area').setAttribute('d', socArea);
+
+  idx = 0;
+  render();
+  if (!playing) play();
+}
+
+var idx = 0;
+var playing = false;
+var timer = null;
+
+function formatTime(i) {
+  var totalMin = startHour * 60 + i * 15;
+  var hh = Math.floor(totalMin / 60) % 24;
+  var mm = totalMin % 60;
+  return (hh < 10 ? '0' + hh : hh) + ':' + (mm < 10 ? '0' + mm : mm);
+}
+
+function render() {
+  if (!barEls.length) return;
+  var W = 320, H = 110;
+  var x = (idx / (N - 1)) * W;
+  var playhead = document.getElementById('playhead');
+  var playheadDot = document.getElementById('playhead-dot');
+  playhead.setAttribute('x1', x.toFixed(2));
+  playhead.setAttribute('x2', x.toFixed(2));
+  var py = H - 8 - (soc24[idx] / 100) * (H - 16);
+  playheadDot.setAttribute('cx', x.toFixed(2));
+  playheadDot.setAttribute('cy', py.toFixed(2));
+
+  for (var m = 0; m < N; m++) {
+    barEls[m].setAttribute('opacity', m <= idx ? '0.9' : '0.2');
+  }
+
+  document.getElementById('time-24').textContent = formatTime(idx);
+  document.getElementById('soc-24').textContent = Math.round(soc24[idx]) + '%';
+  var powerEl = document.getElementById('power-24');
+  var statePill = document.getElementById('state-pill-24');
+  var p = power24[idx];
+  if (p > 1) {
+    powerEl.textContent = '+' + p.toFixed(1) + ' kW';
+    powerEl.style.color = 'var(--bess-teal-700)';
+    statePill.className = 'pill pill-charge';
+    statePill.innerHTML = '<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="#17B890"/></svg><span id="state-txt-24">Charging</span>';
+  } else if (p < -1) {
+    powerEl.textContent = p.toFixed(1) + ' kW';
+    powerEl.style.color = 'var(--bess-coral-700)';
+    statePill.className = 'pill pill-discharge';
+    statePill.innerHTML = '<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="#FF7A3D"/></svg><span id="state-txt-24">Discharging</span>';
+  } else {
+    powerEl.textContent = '0.0 kW';
+    powerEl.style.color = 'var(--bess-text-muted)';
+    statePill.className = 'pill pill-idle';
+    statePill.innerHTML = '<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="#8C8AA8"/></svg><span id="state-txt-24">Idle</span>';
+  }
+
+  document.getElementById('scrub-fill').style.width = ((idx / (N - 1)) * 100).toFixed(2) + '%';
+}
+
+function setPlayIcon(isPlaying) {
+  var playIcon = document.getElementById('play-icon');
+  if (isPlaying) {
+    playIcon.innerHTML = '<rect x="3" y="2" width="2.5" height="8" fill="white"/><rect x="6.5" y="2" width="2.5" height="8" fill="white"/>';
+  } else {
+    playIcon.innerHTML = '<path d="M3 2 L10 6 L3 10 Z" fill="white"/>';
+  }
+}
+
+function tick() {
+  idx++;
+  if (idx >= N) { idx = N - 1; stop(); }
+  render();
+}
+function play() {
+  if (playing) return;
+  if (idx >= N - 1) idx = 0;
+  playing = true;
+  setPlayIcon(true);
+  timer = setInterval(tick, 100);
+}
+function stop() {
+  playing = false;
+  setPlayIcon(false);
+  if (timer) { clearInterval(timer); timer = null; }
+}
+
+function showDashboard() {
+  document.getElementById('view-login').classList.remove('active');
+  document.getElementById('view-dashboard').classList.add('active');
+  window.scrollTo(0, 0);
+  renderPortfolioStats();
+  renderList();
+  renderActions();
+  renderSelected();
+  regenerate24h();
+  renderReplay();
+}
+function showLogin() {
+  document.getElementById('view-dashboard').classList.remove('active');
+  document.getElementById('view-login').classList.add('active');
+  stop();
+  window.scrollTo(0, 0);
+}
+
+document.getElementById('password').addEventListener('keypress', function(e) { if (e.key === 'Enter') showDashboard(); });
+document.getElementById('email').addEventListener('keypress', function(e) { if (e.key === 'Enter') showDashboard(); });
+
+document.addEventListener('DOMContentLoaded', function() {
+  var playBtn = document.getElementById('play-btn');
+  var scrub = document.getElementById('scrub');
+  playBtn.addEventListener('click', function() { if (playing) stop(); else play(); });
+  scrub.addEventListener('click', function(e) {
+    var rect = scrub.getBoundingClientRect();
+    var ratio = (e.clientX - rect.left) / rect.width;
+    ratio = Math.max(0, Math.min(1, ratio));
+    idx = Math.round(ratio * (N - 1));
+    render();
+  });
+
+  var pageSizeSelect = document.getElementById('page-size-select');
+  pageSizeSelect.addEventListener('change', function() {
+    pageSize = parseInt(pageSizeSelect.value, 10);
+    currentPage = Math.floor(selectedIdx / pageSize) + 1;
+    renderList();
+  });
+
+  document.getElementById('pb-prev').addEventListener('click', function() { movePbLane(-1); });
+  document.getElementById('pb-next').addEventListener('click', function() { movePbLane(1); });
+
+  window.addEventListener('resize', function() {
+    var oldVisible = pbVisible;
+    updatePbVisible();
+    if (oldVisible !== pbVisible) applyPbOffset();
+  });
+});
+</script>
+
+</body>
+</html>
