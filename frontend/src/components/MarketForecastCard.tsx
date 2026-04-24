@@ -14,6 +14,7 @@ export function MarketForecastCard({ selectedAssetId, onSelectAsset }: MarketFor
   const [prices, setPrices] = useState<MarketPrice[]>([]);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([getMarketPrices(), getLatestRecommendation()])
@@ -21,7 +22,8 @@ export function MarketForecastCard({ selectedAssetId, onSelectAsset }: MarketFor
         setPrices(p);
         setRecommendation(r);
       })
-      .catch((err) => setError(err.message));
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
 
   const updatedTime = recommendation
@@ -35,7 +37,7 @@ export function MarketForecastCard({ selectedAssetId, onSelectAsset }: MarketFor
       {/* Card header */}
       <div className="flex items-start justify-between mb-4 gap-2">
         <div>
-          <p className="text-[15px] font-medium m-0 text-[#1C1B2E]">Market forecast — next 24 hours</p>
+          <p className="text-[15px] font-medium m-0 text-[#1C1B2E]">AI Recommendation Forecast — next 24 hours</p>
           <p className="text-xs text-[#8C8AA8] mt-0.5 m-0">
             Day-ahead prices · Portfolio recommendation{updatedTime ? ` · Updated ${updatedTime}` : ''}
           </p>
@@ -46,6 +48,16 @@ export function MarketForecastCard({ selectedAssetId, onSelectAsset }: MarketFor
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
+
+      {loading && (
+        <div className="flex items-center justify-center py-12" data-testid="loading-indicator">
+          <svg className="animate-spin h-8 w-8 text-[#7B5CF6]" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span className="ml-3 text-sm text-[#8C8AA8]">Loading forecast data…</span>
+        </div>
+      )}
 
       {/* Recommendation block */}
       {recommendation && (
@@ -79,7 +91,7 @@ export function MarketForecastCard({ selectedAssetId, onSelectAsset }: MarketFor
       )}
 
       {/* Price chart (US-07-01 + US-07-02) */}
-      {prices.length > 0 && recommendation && (
+      {!loading && prices.length > 0 && recommendation && (
         <PriceChart prices={prices} recommendation={recommendation} />
       )}
     </div>
@@ -309,6 +321,34 @@ function PriceChart({ prices, recommendation }: { prices: MarketPrice[]; recomme
         {tickLabels.map((label, i) => (
           <span key={i} data-testid="time-tick">{label}</span>
         ))}
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-4 mt-2 px-1 text-[11px] text-[#8C8AA8]" data-testid="chart-legend">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block w-3 h-[2px] bg-[#7B5CF6] rounded"></span>
+          Price €/MWh
+        </span>
+        {!isHold && (
+          <>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-3 h-3 rounded-sm bg-[#DDF7EE] border border-[#17B890]"></span>
+              Charge window
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-3 h-3 rounded-sm bg-[#FFE8DE] border border-[#FF7A3D]"></span>
+              Discharge window
+            </span>
+          </>
+        )}
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#17B890] border border-white"></span>
+          Min price
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#FF7A3D] border border-white"></span>
+          Max price
+        </span>
       </div>
     </div>
   );
