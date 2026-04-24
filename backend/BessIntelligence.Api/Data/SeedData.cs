@@ -568,43 +568,78 @@ public static class SeedData
                 0.20 * (100 - config.CloudMaePct * 2) +
                 0.15 * (100 - config.SigmaSohPct * 10), 0);
 
-            string chargeStart = cheapest.HourStart.ToString("HH:mm");
-            string chargeEnd = cheapest.HourStart.AddHours(2).ToString("HH:mm");
-            string dischargeStart = mostExpensive.HourStart.ToString("HH:mm");
-            string dischargeEnd = mostExpensive.HourStart.AddHours(2).ToString("HH:mm");
-
             double totalCapacity = batteries.Where(b => !faultBatteryIds.Contains(b.Id)).Sum(b => b.CapacityKwh);
-            double captureEur = Math.Round((mostExpensive.PriceEurMwh - cheapest.PriceEurMwh) * totalCapacity / 1000.0, 2);
 
-            var rec = new AiRecommendation
+            // Hold action for low-spread days (weekends with spread < 2.0×)
+            bool isHold = spread < 2.0
+                && dayGroup.Key.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+
+            AiRecommendation rec;
+            if (isHold)
             {
-                GeneratedAt = new DateTimeOffset(dayGroup.Key, TimeSpan.Zero),
-                PortfolioAction = "Arbitrage",
-                ChargeWindowStart = chargeStart,
-                ChargeWindowEnd = chargeEnd,
-                DischargeWindowStart = dischargeStart,
-                DischargeWindowEnd = dischargeEnd,
-                ChargePrice = cheapest.PriceEurMwh,
-                DischargePrice = mostExpensive.PriceEurMwh,
-                PriceSpreadMultiplier = Math.Round(spread, 1),
-                Avg30dSpreadMultiplier = config.Avg30dSpreadMultiplier,
-                ConfidencePct = confidence,
-                Explanation = $"Charge at {chargeStart} ({cheapest.PriceEurMwh:F0} €/MWh), discharge at {dischargeStart} ({mostExpensive.PriceEurMwh:F0} €/MWh). Spread {spread:F1}× vs 30-day avg {config.Avg30dSpreadMultiplier:F1}×.",
-                EstimatedCaptureEur = captureEur
-            };
+                rec = new AiRecommendation
+                {
+                    GeneratedAt = new DateTimeOffset(dayGroup.Key, TimeSpan.Zero),
+                    PortfolioAction = "Hold",
+                    ChargeWindowStart = "\u2014",
+                    ChargeWindowEnd = "\u2014",
+                    DischargeWindowStart = "\u2014",
+                    DischargeWindowEnd = "\u2014",
+                    ChargePrice = 0,
+                    DischargePrice = 0,
+                    PriceSpreadMultiplier = Math.Round(spread, 1),
+                    Avg30dSpreadMultiplier = config.Avg30dSpreadMultiplier,
+                    ConfidencePct = confidence,
+                    Explanation = "Insufficient price spread — battery longevity protected. "
+                        + $"Today's spread is only {spread:F1}× ({cheapest.PriceEurMwh:F0} → {mostExpensive.PriceEurMwh:F0} €/MWh) "
+                        + $"vs the 30-day average of {config.Avg30dSpreadMultiplier:F1}×. No cycle recommended.",
+                    EstimatedCaptureEur = 0
+                };
+            }
+            else
+            {
+                string chargeStart = cheapest.HourStart.ToString("HH:mm");
+                string chargeEnd = cheapest.HourStart.AddHours(2).ToString("HH:mm");
+                string dischargeStart = mostExpensive.HourStart.ToString("HH:mm");
+                string dischargeEnd = mostExpensive.HourStart.AddHours(2).ToString("HH:mm");
+                double captureEur = Math.Round((mostExpensive.PriceEurMwh - cheapest.PriceEurMwh) * totalCapacity / 1000.0, 2);
+
+                rec = new AiRecommendation
+                {
+                    GeneratedAt = new DateTimeOffset(dayGroup.Key, TimeSpan.Zero),
+                    PortfolioAction = "Arbitrage",
+                    ChargeWindowStart = chargeStart,
+                    ChargeWindowEnd = chargeEnd,
+                    DischargeWindowStart = dischargeStart,
+                    DischargeWindowEnd = dischargeEnd,
+                    ChargePrice = cheapest.PriceEurMwh,
+                    DischargePrice = mostExpensive.PriceEurMwh,
+                    PriceSpreadMultiplier = Math.Round(spread, 1),
+                    Avg30dSpreadMultiplier = config.Avg30dSpreadMultiplier,
+                    ConfidencePct = confidence,
+                    Explanation = $"Charge at {chargeStart} ({cheapest.PriceEurMwh:F0} €/MWh), discharge at {dischargeStart} ({mostExpensive.PriceEurMwh:F0} €/MWh). Spread {spread:F1}× vs 30-day avg {config.Avg30dSpreadMultiplier:F1}×.",
+                    EstimatedCaptureEur = captureEur
+                };
+            }
             recommendations.Add(rec);
 
             foreach (var battery in batteries)
             {
                 bool isFault = faultBatteryIds.Contains(battery.Id);
+                string batteryAction = isHold ? "Hold" : (isFault ? "Hold" : (battery.Id % 3 == 0 ? "Discharge" : "Charge"));
+                string windowStart = (isHold || isFault) ? "\u2014" : rec.ChargeWindowStart;
+                string windowEnd = (isHold || isFault) ? "\u2014" : rec.ChargeWindowEnd;
+                string reason = isHold ? "Insufficient price spread"
+                    : (isFault ? "Fault \u2014 held offline" : $"Price spread {spread:F1}× favourable");
+
                 actions.Add(new BatteryAction
                 {
                     Recommendation = rec,
                     BatteryId = battery.Id,
-                    Action = isFault ? "Hold" : (battery.Id % 3 == 0 ? "Discharge" : "Charge"),
-                    WindowStart = isFault ? "\u2014" : chargeStart,
-                    WindowEnd = isFault ? "\u2014" : chargeEnd,
-                    Reason = isFault ? "Fault \u2014 held offline" : $"Price spread {spread:F1}× favourable"
+                    Action = batteryAction,
+                    WindowStart = windowStart,
+                    WindowEnd = windowEnd,
+                    Reason = reason
                 });
             }
 

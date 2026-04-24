@@ -1,12 +1,19 @@
 import { useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { LoginPage } from './pages/LoginPage'
+import { DashboardPage } from './pages/DashboardPage'
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const navigate = useNavigate()
 
   const handleLogin = () => {
     setIsAuthenticated(true)
+  }
+
+  const handleLogout = () => {
+    setIsAuthenticated(false)
+    navigate('/')
   }
 
   return (
@@ -25,9 +32,7 @@ export function App() {
         path="/dashboard"
         element={
           isAuthenticated ? (
-            <div className="flex items-center justify-center min-h-screen bg-gray-100">
-              <h1 className="text-3xl font-bold text-gray-800">Dashboard — Coming Soon</h1>
-            </div>
+            <DashboardPage onLogout={handleLogout} />
           ) : (
             <Navigate to="/" replace />
           )
