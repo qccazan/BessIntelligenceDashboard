@@ -69,6 +69,10 @@ jobs:
           ASPNETCORE_URLS: http://0.0.0.0:5000
           ASPNETCORE_ENVIRONMENT: CI
 
+      - name: Dump backend startup logs
+        run: cat backend.log
+        working-directory: backend/BessIntelligence.Api
+
       # Start frontend preview server for E2E
       - name: Start frontend
         run: |
