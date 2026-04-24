@@ -38,7 +38,6 @@ builder.Services.AddOpenApi();
 
 // ML models — singletons (trained once at startup, reused across requests)
 builder.Services.AddSingleton<SolarProductionForecaster>();
-builder.Services.AddSingleton<AnomalyDetector>();
 builder.Services.AddSingleton<DegradationPredictor>();
 
 // Jobs — scoped (use DbContext per request)

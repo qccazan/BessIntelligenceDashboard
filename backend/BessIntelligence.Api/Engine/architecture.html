@@ -523,77 +523,6 @@
 
       <hr style="border: none; border-top: 1px solid var(--border);" />
 
-      <!-- ── Anomaly Detector ─────────────────────────── -->
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
-        <h3 style="color: var(--accent-purple); font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
-          🔍 AnomalyDetector — SSA Spike Detection
-        </h3>
-        <p style="color: var(--text-muted); font-size: 0.875rem; max-width: 900px;">
-          Detects abnormal State-of-Charge (SoC) patterns per battery using <strong>Singular Spectrum Analysis</strong>.
-          Trained per battery on 7-day SoC history (D-03b) — one model per battery stored in memory.
-          Uses a 3-day training window with 96-point daily seasonality (15-min intervals × 24h).
-          Output is a score from <strong>0.0</strong> (normal) to <strong>1.0</strong> (every reading anomalous) — the fraction of the last 96 points flagged as spikes.
-        </p>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-          <!-- Input -->
-          <div style="background: #4c1d95; border: 1px solid #a78bfa; border-radius: 8px; padding: 1rem;">
-            <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #c4b5fd; margin-bottom: 0.5rem;">📥 Input</h4>
-            <div style="font-size: 0.8rem; line-height: 1.8;">
-              <strong>batteryId:</strong> <code>1</code> (identifies which model to use)<br>
-              <strong>socSeries:</strong> Array of <code>SocTimePoint { SocPct }</code><br>
-              <span style="color: #c4b5fd;">672 points = 7 days × 96 intervals/day</span>
-            </div>
-            <div style="font-size: 0.75rem; color: #a78bfa; margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px; font-family: 'Cascadia Code', monospace;">
-              SSA params: confidence 95%, pValueHistory 48,<br>
-              trainingWindow 288 (3 days), seasonality 96 (1 day)
-            </div>
-          </div>
-
-          <!-- Output examples -->
-          <div style="display: flex; flex-direction: column; gap: 1rem;">
-            <div style="background: #14532d; border: 1px solid #4ade80; border-radius: 8px; padding: 1rem;">
-              <h4 style="font-size: 0.8rem; text-transform: uppercase; color: #86efac; margin-bottom: 0.4rem;">✅ Healthy — score 0.0</h4>
-              <div style="font-size: 0.8rem; font-family: 'Cascadia Code', monospace; line-height: 1.7;">
-                Smooth daily cycle: charge → 85%, discharge → 20%<br>
-                Spikes detected in last 96 points: <strong>0</strong><br>
-                → <strong style="color: #4ade80;">AnomalyScore = 0 / 96 = 0.00</strong>
-              </div>
-              <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.2rem;">Battery fully eligible for dispatch</div>
-            </div>
-            <div style="background: #78350f; border: 1px solid #f59e0b; border-radius: 8px; padding: 1rem;">
-              <h4 style="font-size: 0.8rem; text-transform: uppercase; color: #fde68a; margin-bottom: 0.4rem;">⚠️ Minor — score 0.03</h4>
-              <div style="font-size: 0.8rem; font-family: 'Cascadia Code', monospace; line-height: 1.7;">
-                Brief 5% SoC drop mid-charge (grid blip)<br>
-                Spikes detected in last 96 points: <strong>3</strong><br>
-                → <strong style="color: #fbbf24;">AnomalyScore = 3 / 96 = 0.031</strong>
-              </div>
-              <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.2rem;">Low risk — transient glitch, still dispatched</div>
-            </div>
-            <div style="background: #78350f; border: 1px solid #f59e0b; border-radius: 8px; padding: 1rem;">
-              <h4 style="font-size: 0.8rem; text-transform: uppercase; color: #fde68a; margin-bottom: 0.4rem;">🔶 Moderate — score 0.10</h4>
-              <div style="font-size: 0.8rem; font-family: 'Cascadia Code', monospace; line-height: 1.7;">
-                SoC jumps ±10–15% erratically during charge<br>
-                Spikes detected in last 96 points: <strong>10</strong><br>
-                → <strong style="color: #fb923c;">AnomalyScore = 10 / 96 = 0.104</strong>
-              </div>
-              <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.2rem;">Possible BMS issue — reduced dispatch participation</div>
-            </div>
-            <div style="background: #7f1d1d; border: 1px solid #f87171; border-radius: 8px; padding: 1rem;">
-              <h4 style="font-size: 0.8rem; text-transform: uppercase; color: #fca5a5; margin-bottom: 0.4rem;">🔴 Severe — score 0.25</h4>
-              <div style="font-size: 0.8rem; font-family: 'Cascadia Code', monospace; line-height: 1.7;">
-                SoC drops 70% → 30% in 1h, then oscillates<br>
-                Spikes detected in last 96 points: <strong>24</strong><br>
-                → <strong style="color: #f87171;">AnomalyScore = 24 / 96 = 0.250</strong>
-              </div>
-              <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.2rem;">Major fault risk — battery held from dispatch, maintenance flagged</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <hr style="border: none; border-top: 1px solid var(--border);" />
-
       <!-- ── Degradation Predictor ────────────────────── -->
       <div style="display: flex; flex-direction: column; gap: 1rem;">
         <h3 style="color: var(--accent-amber); font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
@@ -702,7 +631,6 @@
         </thead>
         <tbody>
           <tr><td>SolarProductionForecaster</td><td>FastTree Regression</td><td>70K (D-09 + D-06 + D-08)</td></tr>
-          <tr><td>AnomalyDetector</td><td>SSA Spike Detection</td><td>672/battery (D-03b)</td></tr>
           <tr><td>DegradationPredictor</td><td>FastTree Regression</td><td>672/battery (D-03b)</td></tr>
         </tbody>
       </table>

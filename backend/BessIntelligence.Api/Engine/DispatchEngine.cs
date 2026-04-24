@@ -20,11 +20,10 @@ public class DispatchEngine
     private readonly OutputAssembler _outputAssembler;
 
     public DispatchEngine(
-        AnomalyDetector anomalyDetector,
         DegradationPredictor degradationPredictor)
     {
         _priceSignalProcessor = new PriceSignalProcessor();
-        _batteryStateAssessor = new BatteryStateAssessor(anomalyDetector);
+        _batteryStateAssessor = new BatteryStateAssessor();
         _degradationCostCalculator = new DegradationCostCalculator(degradationPredictor);
         _windowOptimiser = new WindowOptimiser(_degradationCostCalculator);
         _batteryAssigner = new BatteryAssigner();

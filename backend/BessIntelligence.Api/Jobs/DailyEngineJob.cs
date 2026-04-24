@@ -15,7 +15,6 @@ public class DailyEngineJob
 {
     private readonly AppDbContext _context;
     private readonly SolarProductionForecaster _solarForecaster;
-    private readonly AnomalyDetector _anomalyDetector;
     private readonly DegradationPredictor _degradationPredictor;
     private readonly DailySeedJob _seedJob;
     private readonly ILogger<DailyEngineJob> _logger;
@@ -23,14 +22,12 @@ public class DailyEngineJob
     public DailyEngineJob(
         AppDbContext context,
         SolarProductionForecaster solarForecaster,
-        AnomalyDetector anomalyDetector,
         DegradationPredictor degradationPredictor,
         DailySeedJob seedJob,
         ILogger<DailyEngineJob> logger)
     {
         _context = context;
         _solarForecaster = solarForecaster;
-        _anomalyDetector = anomalyDetector;
         _degradationPredictor = degradationPredictor;
         _seedJob = seedJob;
         _logger = logger;
@@ -104,7 +101,7 @@ public class DailyEngineJob
             var input = await GatherEngineInputAsync(tomorrow);
 
             // Step 4: Run the dispatch engine
-            var engine = new DispatchEngine(_anomalyDetector, _degradationPredictor);
+            var engine = new DispatchEngine(_degradationPredictor);
             var recommendation = engine.Run(input, tomorrow);
 
             // Step 5: Save recommendation
@@ -176,24 +173,8 @@ public class DailyEngineJob
             }
         }
 
-        // Train AnomalyDetector per battery on D-03b
-        var batteries = await _context.Batteries.ToListAsync();
-        foreach (var battery in batteries)
-        {
-            var socSeries = await _context.BatteryHistories
-                .Where(h => h.BatteryId == battery.Id)
-                .OrderBy(h => h.Timestamp)
-                .Select(h => new SocTimePoint { SocPct = (float)h.SocPct })
-                .ToListAsync();
-
-            if (socSeries.Count >= 96)
-            {
-                _anomalyDetector.Train(battery.Id, socSeries);
-            }
-        }
-        _logger.LogInformation("AnomalyDetector trained for {Count} batteries", batteries.Count);
-
         // Train DegradationPredictor on D-03b trajectories
+        var batteries = await _context.Batteries.ToListAsync();
         if (!_degradationPredictor.IsTrained)
         {
             var trainingData = new List<DegradationInput>();

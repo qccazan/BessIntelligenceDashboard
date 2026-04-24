@@ -35,12 +35,6 @@ public class BatteryAssigner
                 continue;
             }
 
-            if (assessment.AnomalyScore > 0.5)
-            {
-                assignments.Add(MakeHold(assessment, $"Anomalous behavior detected (score: {assessment.AnomalyScore:F2})"));
-                continue;
-            }
-
             if (optimisation.IsHold)
             {
                 assignments.Add(MakeHold(assessment, optimisation.HoldReason ?? "Low spread \u2014 hold recommended"));

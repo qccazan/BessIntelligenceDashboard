@@ -1,11 +1,10 @@
-using BessIntelligence.Api.Engine.ML;
 using BessIntelligence.Api.Models;
 
 namespace BessIntelligence.Api.Engine.Steps;
 
 /// <summary>
 /// Step 2: Read today's D-02, enforce LFP safety bounds, compute available/dispatchable energy,
-/// run anomaly detection, classify dispatch scenario, compute per-site grid headroom.
+/// classify dispatch scenario, compute per-site grid headroom.
 /// </summary>
 public class BatteryStateAssessor
 {
@@ -13,13 +12,6 @@ public class BatteryStateAssessor
     private const double DischargeFloor = 15.0;
     private const double EmergencyHold = 10.0;
     private const double Efficiency = 0.95;
-
-    private readonly AnomalyDetector _anomalyDetector;
-
-    public BatteryStateAssessor(AnomalyDetector anomalyDetector)
-    {
-        _anomalyDetector = anomalyDetector;
-    }
 
     public BatteryStateResult Assess(
         List<Battery> batteries,
@@ -60,10 +52,6 @@ public class BatteryStateAssessor
                 ? (double)batteryHistory24h.Count(h => h.SocPct > 80) / batteryHistory24h.Count
                 : 0;
 
-            // ML anomaly score
-            var socSeries = batteryHistory7d.Select(h => new SocTimePoint { SocPct = (float)h.SocPct });
-            double anomalyScore = _anomalyDetector.GetAnomalyScore(battery.Id, socSeries);
-
             // Per-site grid headroom: grid_connection - solar_forecast per hour
             var siteInstallation = solarInstallations.FirstOrDefault(s => s.SiteId == battery.SiteName);
             var siteSolarForecasts = siteInstallation != null
@@ -84,7 +72,6 @@ public class BatteryStateAssessor
                 IsFault = mode == "fault",
                 AvgDod7d = avgDod7d,
                 TimeAbove80Pct = timeAbove80Pct,
-                AnomalyScore = anomalyScore,
                 GridConnectionKw = battery.GridConnectionKw,
                 SiteSolarForecasts = siteSolarForecasts
             });
@@ -136,7 +123,6 @@ public class BatteryAssessment
     public bool IsFault { get; set; }
     public double AvgDod7d { get; set; }
     public double TimeAbove80Pct { get; set; }
-    public double AnomalyScore { get; set; }
     public double GridConnectionKw { get; set; }
     public List<SolarForecast> SiteSolarForecasts { get; set; } = [];
 }
