@@ -44,6 +44,7 @@ builder.Services.AddSingleton<DegradationPredictor>();
 // Jobs — scoped (use DbContext per request)
 builder.Services.AddScoped<DailySeedJob>();
 builder.Services.AddScoped<DailyEngineJob>();
+builder.Services.AddHostedService<DailyEngineHostedService>();
 
 // CORS for local React dev server
 builder.Services.AddCors(options =>

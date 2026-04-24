@@ -32,7 +32,7 @@ public class DispatchEngine
         _outputAssembler = new OutputAssembler();
     }
 
-    public AiRecommendation Run(DispatchEngineInput input)
+    public AiRecommendation Run(DispatchEngineInput input, DateOnly targetDate)
     {
         // Step 1: Price signal processing (window enumeration from static prices)
         var priceSignal = _priceSignalProcessor.Process(
@@ -75,7 +75,8 @@ public class DispatchEngine
             assignments,
             confidence,
             priceSignal,
-            input.EngineConfig.Avg30dSpreadMultiplier);
+            input.EngineConfig.Avg30dSpreadMultiplier,
+            targetDate);
 
         return recommendation;
     }

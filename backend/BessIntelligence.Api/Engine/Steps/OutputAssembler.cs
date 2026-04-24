@@ -13,9 +13,10 @@ public class OutputAssembler
         List<BatteryAssignment> assignments,
         ConfidenceResult confidence,
         PriceSignalResult priceSignal,
-        double avg30dSpreadMultiplier)
+        double avg30dSpreadMultiplier,
+        DateOnly targetDate)
     {
-        var now = DateTimeOffset.UtcNow;
+        var generatedAt = new DateTimeOffset(targetDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
 
         // Derive portfolio action from majority assignment
         var actionCounts = assignments
@@ -66,7 +67,7 @@ public class OutputAssembler
 
         var recommendation = new AiRecommendation
         {
-            GeneratedAt = now,
+            GeneratedAt = generatedAt,
             PortfolioAction = portfolioAction,
             ChargeWindowStart = chargeStart,
             ChargeWindowEnd = chargeEnd,

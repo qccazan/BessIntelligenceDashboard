@@ -105,7 +105,7 @@ public class DailyEngineJob
 
             // Step 4: Run the dispatch engine
             var engine = new DispatchEngine(_anomalyDetector, _degradationPredictor);
-            var recommendation = engine.Run(input);
+            var recommendation = engine.Run(input, tomorrow);
 
             // Step 5: Save recommendation
             _context.AiRecommendations.Add(recommendation);
