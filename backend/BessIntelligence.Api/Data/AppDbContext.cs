@@ -1,5 +1,6 @@
 using BessIntelligence.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BessIntelligence.Api.Data;
 
@@ -62,11 +63,21 @@ public class AppDbContext : DbContext
 
     public static void Seed(AppDbContext context)
     {
-        if (context.Database.IsRelational())
-            context.Database.Migrate();
-        else
-            context.Database.EnsureCreated();
+        var logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("Seed");
 
+        if (context.Database.IsRelational())
+        {
+            logger.LogInformation("Applying EF Core migrations...");
+            context.Database.Migrate();
+            logger.LogInformation("Migrations applied.");
+        }
+        else
+        {
+            context.Database.EnsureCreated();
+        }
+
+        logger.LogInformation("Generating seed data...");
         SeedData.Generate(context);
+        logger.LogInformation("Seed data generation complete.");
     }
 }

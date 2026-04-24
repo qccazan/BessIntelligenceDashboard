@@ -50,8 +50,18 @@ var app = builder.Build();
 // Seed database with mock data
 {
     using var scope = app.Services.CreateScope();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    AppDbContext.Seed(dbContext);
+    try
+    {
+        logger.LogInformation("Starting database seed...");
+        AppDbContext.Seed(dbContext);
+        logger.LogInformation("Database seed completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Database seed failed.");
+    }
 }
 
 if (app.Environment.IsDevelopment())
