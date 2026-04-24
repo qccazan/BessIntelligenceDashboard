@@ -18,6 +18,10 @@ public class AppDbContext : DbContext
     public DbSet<BatteryHistory> BatteryHistories => Set<BatteryHistory>();
     public DbSet<AiRecommendation> AiRecommendations => Set<AiRecommendation>();
     public DbSet<BatteryAction> BatteryActions => Set<BatteryAction>();
+    public DbSet<SolarInstallation> SolarInstallations => Set<SolarInstallation>();
+    public DbSet<SolarProduction> SolarProductions => Set<SolarProduction>();
+    public DbSet<SolarForecast> SolarForecasts => Set<SolarForecast>();
+    public DbSet<EngineRunStatus> EngineRunStatuses => Set<EngineRunStatus>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -58,6 +62,28 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<BatteryAction>(e =>
         {
             e.HasOne(a => a.Battery).WithMany().HasForeignKey(a => a.BatteryId);
+        });
+
+        modelBuilder.Entity<SolarInstallation>(e =>
+        {
+            e.HasIndex(s => s.SiteId).IsUnique();
+        });
+
+        modelBuilder.Entity<SolarProduction>(e =>
+        {
+            e.HasOne(p => p.SolarInstallation).WithMany().HasForeignKey(p => p.SolarInstallationId);
+            e.HasIndex(p => new { p.SolarInstallationId, p.Timestamp });
+        });
+
+        modelBuilder.Entity<SolarForecast>(e =>
+        {
+            e.HasOne(f => f.SolarInstallation).WithMany().HasForeignKey(f => f.SolarInstallationId);
+            e.HasIndex(f => new { f.SolarInstallationId, f.HourStart });
+        });
+
+        modelBuilder.Entity<EngineRunStatus>(e =>
+        {
+            e.HasIndex(s => s.Date).IsUnique();
         });
     }
 

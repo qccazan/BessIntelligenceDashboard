@@ -17,4 +17,5 @@ public class Battery
     public string Manufacturer { get; set; } = string.Empty;
     public string BatteryModel { get; set; } = string.Empty;
     public string WiththegridNodeId { get; set; } = string.Empty;
+    public double GridConnectionKw { get; set; }
 }

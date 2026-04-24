@@ -1,5 +1,7 @@
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using BessIntelligence.Api.Data;
+using BessIntelligence.Api.Engine.ML;
+using BessIntelligence.Api.Jobs;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
@@ -34,6 +36,15 @@ else
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
+// ML models — singletons (trained once at startup, reused across requests)
+builder.Services.AddSingleton<SolarProductionForecaster>();
+builder.Services.AddSingleton<AnomalyDetector>();
+builder.Services.AddSingleton<DegradationPredictor>();
+
+// Jobs — scoped (use DbContext per request)
+builder.Services.AddScoped<DailySeedJob>();
+builder.Services.AddScoped<DailyEngineJob>();
+
 // CORS for local React dev server
 builder.Services.AddCors(options =>
 {
@@ -61,6 +72,22 @@ var app = builder.Build();
     catch (Exception ex)
     {
         logger.LogError(ex, "Database seed failed.");
+    }
+}
+
+// Run engine at startup if no recommendation exists for tomorrow
+{
+    using var scope = app.Services.CreateScope();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+    try
+    {
+        var engineJob = scope.ServiceProvider.GetRequiredService<DailyEngineJob>();
+        var status = engineJob.RunAsync().GetAwaiter().GetResult();
+        logger.LogInformation("Engine startup check: {Status} for {Date}", status.Status, status.Date);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Engine startup run failed.");
     }
 }
 
