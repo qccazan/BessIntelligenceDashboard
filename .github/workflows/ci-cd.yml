@@ -132,7 +132,7 @@ jobs:
 
       # Build .NET backend and copy frontend into wwwroot
       - name: Publish backend
-        run: dotnet publish --configuration Release --output ./publish
+        run: dotnet publish --configuration Release --runtime linux-x64 --self-contained false --output ./publish
         working-directory: backend/BessIntelligence.Api
 
       - name: Copy frontend build to wwwroot
