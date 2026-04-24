@@ -57,7 +57,7 @@ jobs:
           sleep 10
         working-directory: backend/BessIntelligence.Api
         env:
-          ASPNETCORE_URLS: http://localhost:5000
+          ASPNETCORE_URLS: http://0.0.0.0:5000
           ASPNETCORE_ENVIRONMENT: CI
 
       # Start frontend preview server for E2E
