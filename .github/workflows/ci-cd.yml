@@ -58,7 +58,14 @@ jobs:
         working-directory: backend/BessIntelligence.Api
         env:
           ASPNETCORE_URLS: http://localhost:5000
-          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_ENVIRONMENT: CI
+
+      # Start frontend preview server for E2E
+      - name: Start frontend
+        run: |
+          npx vite preview --port 5173 &
+          sleep 3
+        working-directory: frontend
 
       # Run E2E tests
       - name: Install E2E dependencies
@@ -72,7 +79,6 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test --reporter=list
         working-directory: e2e
-        continue-on-error: true
 
       - name: Upload test results
         uses: actions/upload-artifact@v4

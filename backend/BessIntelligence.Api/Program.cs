@@ -19,9 +19,17 @@ else
     builder.Logging.AddOpenTelemetry(logging => logging.AddConsoleExporter());
 }
 
-// EF Core — SQL Server for both dev (LocalDB) and production (Azure SQL)
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// EF Core — InMemory for CI, SQL Server for dev (LocalDB) and production (Azure SQL)
+if (builder.Environment.EnvironmentName == "CI")
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseInMemoryDatabase("BessIntelligenceTestDb"));
+}
+else
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
 
 // Register repositories here as they are created
 // builder.Services.AddScoped<IBatteryRepository, BatteryRepository>();
