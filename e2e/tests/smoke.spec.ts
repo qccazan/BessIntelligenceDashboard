@@ -5,7 +5,7 @@ const API_URL = process.env.API_URL || 'http://127.0.0.1:5000';
 test.describe('Smoke: setup verification', () => {
   test('frontend loads and shows the login screen', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /BESS Intelligence/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /BESS - Qubiz/i })).toBeVisible();
     await expect(page.getByLabel('Username')).toBeVisible();
     await expect(page.getByLabel('Password')).toBeVisible();
     await expect(page.getByRole('button', { name: /log in/i })).toBeVisible();
