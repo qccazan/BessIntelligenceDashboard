@@ -10,8 +10,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
-    name: Build & Deploy to Azure App Service
+  deploy:
+    name: Deploy to Azure App Service
     runs-on: ubuntu-latest
     environment: production
 
