@@ -1,7 +1,23 @@
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using BessIntelligence.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// OpenTelemetry — Azure Monitor / Application Insights
+if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
+{
+    builder.Services.AddOpenTelemetry().UseAzureMonitor(options =>
+    {
+        options.ConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+    });
+}
+else
+{
+    builder.Logging.AddOpenTelemetry(logging => logging.AddConsoleExporter());
+}
 
 // EF Core — SQL Server for both dev (LocalDB) and production (Azure SQL)
 builder.Services.AddDbContext<AppDbContext>(options =>
