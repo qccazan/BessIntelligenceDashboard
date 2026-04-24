@@ -50,13 +50,15 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Seed database in development
-if (app.Environment.IsDevelopment())
+// Seed database with mock data
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     AppDbContext.Seed(dbContext);
+}
 
+if (app.Environment.IsDevelopment())
+{
     app.MapOpenApi();
 }
 

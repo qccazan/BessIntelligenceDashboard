@@ -28,7 +28,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">BESS Intelligence</h1>
+          <h1 className="text-2xl font-bold text-gray-900">BESS - Qubiz</h1>
           <p className="mt-1 text-sm text-gray-500" data-testid="tagline">
             AI-augmented battery intelligence, on top of your monitoring platform
           </p>

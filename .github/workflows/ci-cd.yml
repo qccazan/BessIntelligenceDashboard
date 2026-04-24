@@ -53,8 +53,17 @@ jobs:
       # Start backend for E2E
       - name: Start backend
         run: |
-          dotnet run --configuration Release --no-build &
-          sleep 10
+          nohup dotnet run --configuration Release --no-build --no-launch-profile > backend.log 2>&1 &
+          echo "Waiting for backend to start..."
+          for i in $(seq 1 30); do
+            if curl -s http://127.0.0.1:5000/api/health > /dev/null 2>&1; then
+              echo "Backend is up!"
+              break
+            fi
+            echo "Attempt $i - backend not ready, waiting..."
+            sleep 2
+          done
+          curl -f http://127.0.0.1:5000/api/health || (cat backend.log && exit 1)
         working-directory: backend/BessIntelligence.Api
         env:
           ASPNETCORE_URLS: http://0.0.0.0:5000
