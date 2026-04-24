@@ -31,9 +31,6 @@ else
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 }
 
-// Register repositories here as they are created
-// builder.Services.AddScoped<IBatteryRepository, BatteryRepository>();
-
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 

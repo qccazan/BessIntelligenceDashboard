@@ -1,3 +1,4 @@
+using BessIntelligence.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace BessIntelligence.Api.Data;
@@ -8,21 +9,64 @@ public class AppDbContext : DbContext
     {
     }
 
+    public DbSet<EngineConfig> EngineConfigs => Set<EngineConfig>();
+    public DbSet<Battery> Batteries => Set<Battery>();
+    public DbSet<MarketPrice> MarketPrices => Set<MarketPrice>();
+    public DbSet<WeatherForecast> WeatherForecasts => Set<WeatherForecast>();
+    public DbSet<BatteryTelemetry> BatteryTelemetries => Set<BatteryTelemetry>();
+    public DbSet<BatteryHistory> BatteryHistories => Set<BatteryHistory>();
+    public DbSet<AiRecommendation> AiRecommendations => Set<AiRecommendation>();
+    public DbSet<BatteryAction> BatteryActions => Set<BatteryAction>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Battery>(e =>
+        {
+            e.HasIndex(b => b.Code).IsUnique();
+        });
+
+        modelBuilder.Entity<BatteryTelemetry>(e =>
+        {
+            e.HasOne(t => t.Battery).WithMany().HasForeignKey(t => t.BatteryId);
+            e.HasIndex(t => t.BatteryId);
+        });
+
+        modelBuilder.Entity<BatteryHistory>(e =>
+        {
+            e.HasOne(h => h.Battery).WithMany().HasForeignKey(h => h.BatteryId);
+            e.HasIndex(h => new { h.BatteryId, h.Timestamp });
+        });
+
+        modelBuilder.Entity<MarketPrice>(e =>
+        {
+            e.HasIndex(p => p.HourStart);
+        });
+
+        modelBuilder.Entity<WeatherForecast>(e =>
+        {
+            e.HasIndex(w => new { w.SiteId, w.HourStart });
+        });
+
+        modelBuilder.Entity<AiRecommendation>(e =>
+        {
+            e.HasMany(r => r.BatteryActions).WithOne(a => a.Recommendation).HasForeignKey(a => a.RecommendationId);
+        });
+
+        modelBuilder.Entity<BatteryAction>(e =>
+        {
+            e.HasOne(a => a.Battery).WithMany().HasForeignKey(a => a.BatteryId);
+        });
     }
 
     public static void Seed(AppDbContext context)
     {
-        context.Database.EnsureCreated();
+        if (context.Database.IsRelational())
+            context.Database.Migrate();
+        else
+            context.Database.EnsureCreated();
 
-        // Add seed data here as entities are created
-        // Example:
-        // if (!context.Batteries.Any())
-        // {
-        //     context.Batteries.AddRange(...);
-        //     context.SaveChanges();
-        // }
+        SeedData.Generate(context);
     }
 }
