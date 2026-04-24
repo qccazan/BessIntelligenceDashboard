@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+@keyframes faultPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 91, 138, 0.5); }
+  50% { box-shadow: 0 0 0 5px rgba(240, 91, 138, 0); }
+}

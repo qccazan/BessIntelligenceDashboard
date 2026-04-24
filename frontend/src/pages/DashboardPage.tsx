@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MarketForecastCard } from '../components/MarketForecastCard';
+import { FleetOverviewCard } from '../components/FleetOverviewCard';
+import type { FleetSummary } from '../services/batteryService';
+import { getFleetSummary } from '../services/batteryService';
 
 interface DashboardPageProps {
   onLogout: () => void;
@@ -7,6 +10,11 @@ interface DashboardPageProps {
 
 export function DashboardPage({ onLogout }: DashboardPageProps) {
   const [selectedAssetId, setSelectedAssetId] = useState('BESS-01');
+  const [fleetSummary, setFleetSummary] = useState<FleetSummary | null>(null);
+
+  useEffect(() => {
+    getFleetSummary().then(setFleetSummary).catch(() => {});
+  }, []);
 
   return (
     <div className="max-w-[1280px] mx-auto p-5" data-testid="dashboard">
@@ -43,31 +51,32 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
           <p className="text-xl font-medium m-0">My battery portfolio</p>
           <p className="text-[13px] text-[#5C5A7A] m-0 mt-1 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#17B890] shadow-[0_0_0_3px_rgba(23,184,144,0.18)]"></span>
-            12 assets online · Last sync 12 seconds ago
+            {fleetSummary ? `${fleetSummary.assetCount} assets online` : '12 assets online'} · Last sync 12 seconds ago
           </p>
         </div>
         <div className="flex gap-3 flex-wrap">
           <div className="bg-[#F0ECFE] px-3.5 py-2 rounded-[10px] text-right">
             <p className="text-[10px] text-[#4A30B5] font-medium uppercase tracking-wider m-0">Total capacity</p>
-            <p className="text-base font-medium text-[#261761] mt-0.5 m-0">11.2 MWh</p>
+            <p className="text-base font-medium text-[#261761] mt-0.5 m-0" data-testid="total-capacity">{fleetSummary ? `${fleetSummary.totalCapacityMwh} MWh` : '—'}</p>
           </div>
           <div className="bg-[#DDF7EE] px-3.5 py-2 rounded-[10px] text-right">
             <p className="text-[10px] text-[#0B7757] font-medium uppercase tracking-wider m-0">Available now</p>
-            <p className="text-base font-medium text-[#053E2D] mt-0.5 m-0">6.48 MWh</p>
+            <p className="text-base font-medium text-[#053E2D] mt-0.5 m-0" data-testid="available-now">{fleetSummary ? `${fleetSummary.availableNowMwh} MWh` : '—'}</p>
           </div>
           <div className="bg-[#FFE8DE] px-3.5 py-2 rounded-[10px] text-right">
             <p className="text-[10px] text-[#B8461A] font-medium uppercase tracking-wider m-0">Net power</p>
-            <p className="text-base font-medium text-[#5C210A] mt-0.5 m-0">−0.47 MWh</p>
+            <p className="text-base font-medium text-[#5C210A] mt-0.5 m-0" data-testid="net-power">{fleetSummary ? `${fleetSummary.netPowerMwh} MWh` : '—'}</p>
           </div>
         </div>
       </div>
 
       {/* Dashboard grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Fleet Overview placeholder (F-03) */}
-        <div className="bg-white rounded-[14px] p-5 border border-[rgba(88,70,180,0.14)] col-span-full flex items-center justify-center min-h-[120px]">
-          <p className="text-[#8C8AA8] text-sm">Fleet overview — coming soon</p>
-        </div>
+        {/* Fleet Overview (F-03) */}
+        <FleetOverviewCard
+          selectedAssetId={selectedAssetId}
+          onSelectAsset={setSelectedAssetId}
+        />
 
         {/* Market Forecast Card (F-07) */}
         <MarketForecastCard
@@ -76,13 +85,13 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
         />
 
         {/* Current State placeholder (F-04) */}
-        <div className="bg-white rounded-[14px] p-5 border border-[rgba(88,70,180,0.14)] flex items-center justify-center min-h-[120px]">
-          <p className="text-[#8C8AA8] text-sm">Current state — coming soon</p>
+        <div className="bg-white rounded-[14px] p-5 border border-[rgba(88,70,180,0.14)] flex items-center justify-center min-h-[120px]" data-testid="current-state-card" data-asset={selectedAssetId}>
+          <p className="text-[#8C8AA8] text-sm">Current state — {selectedAssetId}</p>
         </div>
 
         {/* Replay placeholder (F-05) */}
-        <div className="bg-white rounded-[14px] p-5 border border-[rgba(88,70,180,0.14)] flex items-center justify-center min-h-[120px]">
-          <p className="text-[#8C8AA8] text-sm">Last 24 hours replay — coming soon</p>
+        <div className="bg-white rounded-[14px] p-5 border border-[rgba(88,70,180,0.14)] flex items-center justify-center min-h-[120px]" data-testid="replay-card" data-asset={selectedAssetId}>
+          <p className="text-[#8C8AA8] text-sm">Last 24 hours replay — {selectedAssetId}</p>
         </div>
       </div>
 

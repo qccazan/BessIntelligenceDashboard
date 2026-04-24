@@ -98,7 +98,8 @@ test.describe('US-07-05: Per-Battery Action Strip', () => {
     expect(initialText).toContain('1–');
 
     // Click next
-    const nextBtn = page.getByLabel('Next');
+    const strip = page.getByTestId('per-battery-strip');
+    const nextBtn = strip.getByLabel('Next');
     await nextBtn.click();
 
     const afterNext = await counter.textContent();
@@ -111,7 +112,7 @@ test.describe('US-07-05: Per-Battery Action Strip', () => {
     const initial = await counter.textContent();
     expect(initial).toMatch(/\d+–\d+ \/ 12/);
 
-    await page.getByLabel('Next').click();
+    await page.getByTestId('per-battery-strip').getByLabel('Next').click();
     const updated = await counter.textContent();
     expect(updated).toMatch(/\d+–\d+ \/ 12/);
     expect(updated).not.toBe(initial);
