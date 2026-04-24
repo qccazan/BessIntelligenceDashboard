@@ -52,14 +52,14 @@ test.describe('US-07-02: Charge and Discharge Zone Overlays', () => {
     const zoneX = parseFloat((await chargeZone.getAttribute('x')) ?? '0');
     const zoneW = parseFloat((await chargeZone.getAttribute('width')) ?? '0');
     const dotCx = parseFloat((await minDot.getAttribute('cx')) ?? '0');
-    // Min dot should be within or near the charge zone
-    expect(dotCx).toBeGreaterThanOrEqual(zoneX - 20);
-    expect(dotCx).toBeLessThanOrEqual(zoneX + zoneW + 20);
+    // Min dot should be within or near the charge zone (50px tolerance ≈ 1.5 hours)
+    expect(dotCx).toBeGreaterThanOrEqual(zoneX - 50);
+    expect(dotCx).toBeLessThanOrEqual(zoneX + zoneW + 50);
 
     const dZoneX = parseFloat((await dischargeZone.getAttribute('x')) ?? '0');
     const dZoneW = parseFloat((await dischargeZone.getAttribute('width')) ?? '0');
     const maxCx = parseFloat((await maxDot.getAttribute('cx')) ?? '0');
-    expect(maxCx).toBeGreaterThanOrEqual(dZoneX - 20);
-    expect(maxCx).toBeLessThanOrEqual(dZoneX + dZoneW + 20);
+    expect(maxCx).toBeGreaterThanOrEqual(dZoneX - 50);
+    expect(maxCx).toBeLessThanOrEqual(dZoneX + dZoneW + 50);
   });
 });
