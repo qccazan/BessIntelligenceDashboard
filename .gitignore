@@ -1,0 +1,38 @@
+# .NET
+backend/**/bin/
+backend/**/obj/
+*.dll
+*.exe
+*.pdb
+*.user
+*.suo
+*.cache
+*.log
+*.vs/
+*.DotSettings.user
+
+# EF Core
+*.db
+*.db-shm
+*.db-wal
+
+# Node / Frontend / E2E
+node_modules/
+dist/
+frontend/.env.local
+frontend/.env.*.local
+
+# Playwright
+e2e/test-results/
+e2e/playwright-report/
+e2e/blob-report/
+
+# IDE
+.idea/
+.vs/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
