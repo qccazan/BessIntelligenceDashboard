@@ -1,0 +1,1527 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BESS Intelligence — Pitch</title>
+<style>
+  :root {
+    /* Brand palette mirrored from the BESS Intelligence Dashboard */
+    --primary: #7B5CF6;
+    --primary-deep: #4A30B5;
+    --primary-ink: #261761;
+    --primary-soft: #F0ECFE;
+    --secondary-soft: #DFECFF;
+    --ink: #1C1B2E;
+    --body: #5C5A7A;
+    --muted: #8C8AA8;
+    --border: rgba(88, 70, 180, 0.14);
+    --border-strong: rgba(88, 70, 180, 0.28);
+    --surface: #FFFFFF;
+    --canvas: #FAF9FF;
+
+    --charge: #17B890;
+    --charge-soft: #DDF7EE;
+    --charge-ink: #0B7757;
+
+    --discharge: #FF7A3D;
+    --discharge-soft: #FFE8DE;
+    --discharge-ink: #B8461A;
+
+    --fault: #F05B8A;
+    --fault-soft: #FFE4EE;
+
+    --solar: #B8860B;
+    --solar-soft: #FFF8E1;
+    --solar-ink: #7A5800;
+
+    --radius-card: 14px;
+    --radius-pill: 999px;
+    --radius-tile: 10px;
+
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #0E0B1F;
+    font-family: var(--font);
+    color: var(--ink);
+    overflow: hidden;
+  }
+
+  /* ---- Stage: a true 1920x1080 canvas, CSS-scaled to fit any viewport ---- */
+  .viewport {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(1200px 800px at 20% 0%, rgba(123, 92, 246, 0.18), transparent 60%),
+      radial-gradient(1000px 700px at 100% 100%, rgba(23, 184, 144, 0.08), transparent 60%),
+      #0E0B1F;
+  }
+  .stage {
+    width: 1920px;
+    height: 1080px;
+    background: var(--canvas);
+    color: var(--ink);
+    position: relative;
+    transform-origin: center center;
+    box-shadow: 0 40px 120px rgba(0,0,0,0.5);
+    overflow: hidden;
+    border-radius: 8px;
+  }
+
+  /* ---- Top chrome ---- */
+  .chrome {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 88px;
+    padding: 0 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, var(--primary-soft) 0%, var(--secondary-soft) 100%);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .brand-mark {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--primary);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 8px 24px rgba(123,92,246,0.35);
+  }
+  .brand-mark svg { width: 26px; height: 26px; }
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+  }
+  .brand-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--primary-ink);
+    letter-spacing: -0.01em;
+  }
+  .brand-sub {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--primary-deep);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin-top: 4px;
+  }
+  .progress {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border-radius: var(--radius-pill);
+    background: rgba(255,255,255,0.6);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--primary-deep);
+    transition: all 350ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    opacity: 0.55;
+  }
+  .step.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 6px 18px rgba(123,92,246,0.35);
+    opacity: 1;
+  }
+  .step .num {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: rgba(123,92,246,0.18);
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+  }
+  .step.active .num {
+    background: rgba(255,255,255,0.25);
+    color: white;
+  }
+
+  /* ---- Slide framework ---- */
+  .deck {
+    position: absolute;
+    top: 88px;
+    left: 0;
+    right: 0;
+    bottom: 64px;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: 64px 80px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(40px);
+    transition:
+      opacity 480ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      transform 560ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      visibility 0s linear 560ms;
+  }
+  .slide.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    transition:
+      opacity 480ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      transform 560ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      visibility 0s linear 0s;
+  }
+  .slide.prev {
+    transform: translateX(-40px);
+  }
+
+  /* ---- Footer ---- */
+  .footer {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 64px;
+    padding: 0 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    z-index: 10;
+  }
+  .timer {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    color: var(--body);
+  }
+  .timer-bar {
+    width: 240px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--primary-soft);
+    overflow: hidden;
+  }
+  .timer-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--primary), var(--charge));
+    border-radius: 999px;
+    transition: width 200ms linear;
+  }
+  .timer-target {
+    font-variant-numeric: tabular-nums;
+    color: var(--primary-deep);
+    font-weight: 500;
+  }
+  .nav-hint {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+  .key {
+    display: inline-grid;
+    place-items: center;
+    min-width: 28px;
+    height: 24px;
+    padding: 0 6px;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    background: var(--canvas);
+    font-size: 12px;
+    color: var(--primary-deep);
+    font-family: var(--font);
+  }
+
+  /* ---- Common slide elements ---- */
+  .slide-head {
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    margin-bottom: 36px;
+  }
+  .slide-eyebrow {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+  }
+  .slide-title {
+    font-size: 56px;
+    font-weight: 600;
+    color: var(--primary-ink);
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.05;
+  }
+  .slide-kicker {
+    font-size: 22px;
+    color: var(--body);
+    font-weight: 400;
+    margin: 0;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+  }
+
+  /* Reveal animation */
+  .reveal { opacity: 0; transform: translateY(18px); transition: all 600ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .slide.active .reveal { opacity: 1; transform: translateY(0); }
+  .slide.active .r1 { transition-delay: 100ms; }
+  .slide.active .r2 { transition-delay: 220ms; }
+  .slide.active .r3 { transition-delay: 340ms; }
+  .slide.active .r4 { transition-delay: 460ms; }
+  .slide.active .r5 { transition-delay: 580ms; }
+  .slide.active .r6 { transition-delay: 700ms; }
+  .slide.active .r7 { transition-delay: 820ms; }
+
+  /* ============================================================
+     SLIDE 1 — THE WHY
+     ============================================================ */
+  .why-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 48px;
+    height: calc(100% - 120px);
+  }
+  .why-left { display: flex; flex-direction: column; gap: 28px; }
+  .why-right { position: relative; }
+
+  .why-statement {
+    font-size: 44px;
+    font-weight: 500;
+    color: var(--primary-ink);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+  }
+  .why-statement .accent { color: var(--primary); font-weight: 600; }
+  .why-statement .underline {
+    position: relative;
+    display: inline-block;
+  }
+  .why-statement .underline::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: 2px;
+    height: 12px;
+    background: var(--primary-soft);
+    z-index: -1;
+    border-radius: 4px;
+  }
+
+  .why-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .why-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border-radius: var(--radius-pill);
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .pill-charge { background: var(--charge-soft); color: var(--charge-ink); }
+  .pill-discharge { background: var(--discharge-soft); color: var(--discharge-ink); }
+  .pill-revenue { background: var(--primary-soft); color: var(--primary-deep); }
+
+  .why-outcomes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .outcome {
+    padding: 22px 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+  }
+  .outcome-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: grid;
+    place-items: center;
+    margin-bottom: 14px;
+  }
+  .outcome-icon svg { width: 22px; height: 22px; }
+  .outcome-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-ink);
+    margin: 0 0 4px 0;
+  }
+  .outcome-sub {
+    font-size: 13px;
+    color: var(--body);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* Price chart */
+  .price-card {
+    height: 100%;
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+  }
+  .price-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .price-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
+  .price-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-ink);
+    margin: 4px 0 0 0;
+  }
+  .price-legend {
+    display: flex;
+    gap: 14px;
+    font-size: 12px;
+    color: var(--body);
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 999px; display: inline-block; margin-right: 6px; vertical-align: middle;
+  }
+  .price-svg-wrap { flex: 1; position: relative; }
+  .price-svg { width: 100%; height: 100%; }
+
+  .price-line {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 3000;
+    stroke-dashoffset: 3000;
+  }
+  .slide.active .price-line {
+    animation: drawLine 2200ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms forwards;
+  }
+  @keyframes drawLine {
+    to { stroke-dashoffset: 0; }
+  }
+  .price-area {
+    fill: url(#priceGrad);
+    opacity: 0;
+  }
+  .slide.active .price-area {
+    animation: fadeArea 800ms ease-out 1800ms forwards;
+  }
+  @keyframes fadeArea {
+    to { opacity: 1; }
+  }
+  .price-marker {
+    opacity: 0;
+  }
+  .slide.active .price-marker {
+    animation: popIn 400ms cubic-bezier(0.2, 0.9, 0.3, 1.4) forwards;
+  }
+  .slide.active .marker-charge { animation-delay: 2400ms; }
+  .slide.active .marker-discharge { animation-delay: 2800ms; }
+  @keyframes popIn {
+    0% { opacity: 0; transform: scale(0.4); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .marker-pulse {
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+  .slide.active .marker-pulse {
+    animation: pulseRing 2s ease-out infinite;
+  }
+  @keyframes pulseRing {
+    0% { r: 8; opacity: 0.6; }
+    100% { r: 28; opacity: 0; }
+  }
+
+  /* ============================================================
+     SLIDE 2 — THE HOW
+     ============================================================ */
+  .how-grid {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 28px;
+    height: calc(100% - 100px);
+  }
+  .how-pipeline {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 28px;
+    flex: 1;
+    min-height: 0;
+  }
+  .pipeline-card {
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .pipeline-card-title {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .pipeline-card-sub {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-ink);
+    margin: 0 0 18px 0;
+  }
+  .pipeline-flow {
+    flex: 1;
+    position: relative;
+    width: 100%;
+  }
+  .flow-svg { width: 100%; height: 100%; }
+
+  .agent-node {
+    fill: white;
+    stroke: var(--border-strong);
+    stroke-width: 1.4;
+  }
+  .agent-node.entry { fill: var(--primary-soft); stroke: var(--primary); }
+  .agent-label {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    fill: var(--primary-ink);
+    text-anchor: middle;
+  }
+  .agent-sub {
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 500;
+    fill: var(--body);
+    text-anchor: middle;
+  }
+  .flow-arrow {
+    stroke: var(--primary);
+    stroke-width: 1.6;
+    fill: none;
+    stroke-linecap: round;
+    marker-end: url(#flowArrow);
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+  }
+  .slide.active .flow-arrow {
+    animation: drawArrow 1600ms cubic-bezier(0.2, 0.7, 0.2, 1) 400ms forwards;
+  }
+  @keyframes drawArrow {
+    to { stroke-dashoffset: 0; }
+  }
+
+  .stack-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, 1fr);
+    gap: 14px;
+    flex: 1;
+    min-height: 0;
+  }
+  .stack-tile {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-tile);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .stack-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .stack-icon svg { width: 20px; height: 20px; }
+  .stack-text { display: flex; flex-direction: column; min-width: 0; }
+  .stack-title { font-size: 14px; font-weight: 600; color: var(--primary-ink); margin: 0; }
+  .stack-sub { font-size: 11px; color: var(--body); margin: 2px 0 0 0; line-height: 1.3; }
+
+  .icon-be { background: var(--primary-soft); color: var(--primary); }
+  .icon-db { background: var(--charge-soft); color: var(--charge-ink); }
+  .icon-ml { background: var(--solar-soft); color: var(--solar-ink); }
+  .icon-fe { background: var(--discharge-soft); color: var(--discharge-ink); }
+  .icon-ot { background: rgba(74,48,181,0.10); color: var(--primary-deep); }
+  .icon-az { background: rgba(0,120,212,0.10); color: #0078D4; }
+
+  /* CI/CD strip */
+  .cicd {
+    padding: 22px 32px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: linear-gradient(135deg, #ffffff 0%, var(--primary-soft) 100%);
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .cicd-step {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; font-weight: 500; color: var(--primary-deep);
+  }
+  .cicd-dot {
+    width: 32px; height: 32px;
+    border-radius: 999px;
+    background: white;
+    border: 1.5px solid var(--primary);
+    color: var(--primary);
+    display: grid; place-items: center;
+  }
+  .cicd-dot svg { width: 16px; height: 16px; }
+  .cicd-arrow {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--charge));
+    border-radius: 2px;
+    position: relative;
+    opacity: 0.5;
+  }
+
+  /* Dispatch chips */
+  .dispatch-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .dispatch-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--primary-deep);
+  }
+  .dispatch-chip .dnum {
+    width: 18px; height: 18px; border-radius: 999px;
+    background: var(--primary); color: white;
+    display: grid; place-items: center;
+    font-size: 10px; font-weight: 700;
+  }
+
+  /* ============================================================
+     SLIDE 3 — DEMO
+     ============================================================ */
+  .demo-stage {
+    height: calc(100% - 120px);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .video-frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-card);
+    background: #0E0B1F;
+    border: 1px solid var(--border-strong);
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(38, 23, 97, 0.18);
+  }
+  .video-frame video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #0E0B1F;
+    display: block;
+  }
+  .video-placeholder {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(800px 500px at 50% 40%, rgba(123,92,246,0.25), transparent 60%),
+      #0E0B1F;
+    color: white;
+    text-align: center;
+    padding: 0 80px;
+    transition: opacity 250ms ease;
+  }
+  .video-placeholder.hidden { opacity: 0; pointer-events: none; }
+  .vp-inner { max-width: 720px; }
+  .vp-icon {
+    width: 96px; height: 96px;
+    margin: 0 auto 24px;
+    border-radius: 24px;
+    background: rgba(123,92,246,0.18);
+    border: 1px solid rgba(123,92,246,0.35);
+    display: grid; place-items: center;
+  }
+  .vp-icon svg { width: 44px; height: 44px; color: white; }
+  .vp-title {
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.01em;
+  }
+  .vp-sub {
+    font-size: 16px;
+    color: rgba(255,255,255,0.7);
+    margin: 0 0 28px 0;
+    line-height: 1.5;
+  }
+  .vp-path {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-size: 14px;
+    color: #DCD7FB;
+  }
+  .vp-or {
+    display: block;
+    margin: 22px 0 14px 0;
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+  }
+  .vp-drop {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+  }
+  .vp-drop input { display: none; }
+
+  .video-frame.dragover .video-placeholder {
+    background: rgba(123,92,246,0.45);
+  }
+  .video-frame.dragover { border-color: var(--primary); }
+
+  /* ============================================================
+     SLIDE 4 — QR
+     ============================================================ */
+  .qr-stage {
+    height: calc(100% - 100px);
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 56px;
+    align-items: center;
+  }
+  .qr-copy { display: flex; flex-direction: column; gap: 24px; }
+  .qr-headline {
+    font-size: 64px;
+    font-weight: 600;
+    color: var(--primary-ink);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .qr-headline .accent { color: var(--primary); }
+  .qr-sub {
+    font-size: 22px;
+    color: var(--body);
+    line-height: 1.45;
+    margin: 0;
+  }
+  .qr-url-row {
+    display: flex; align-items: center; gap: 14px;
+    margin-top: 12px;
+  }
+  .qr-url {
+    display: inline-block;
+    padding: 14px 20px;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid var(--border-strong);
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-size: 16px;
+    color: var(--primary-deep);
+    word-break: break-all;
+  }
+
+  .qr-frame {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 40px;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 30px 80px rgba(38, 23, 97, 0.12);
+    width: 640px;
+    height: 640px;
+    margin-left: auto;
+    position: relative;
+  }
+  .qr-frame::after {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    border-radius: 22px;
+    border: 1px dashed var(--border-strong);
+    pointer-events: none;
+  }
+  .qr-frame svg.qr {
+    width: 100%; height: 100%;
+    display: block;
+  }
+  .qr-frame svg.qr path { fill: var(--primary-ink); }
+
+  .qr-logo-mask {
+    position: absolute;
+    width: 96px; height: 96px;
+    border-radius: 22px;
+    background: var(--primary);
+    color: white;
+    display: grid; place-items: center;
+    box-shadow: 0 8px 24px rgba(123,92,246,0.4);
+    border: 6px solid white;
+  }
+  .qr-logo-mask svg { width: 40px; height: 40px; }
+
+  .credits {
+    margin-top: 28px;
+    font-size: 13px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+  }
+
+  /* Floating subtle particles for the canvas backdrop */
+  .canvas-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+    opacity: 0.55;
+  }
+  .canvas-bg .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.5;
+    animation: drift 22s ease-in-out infinite;
+  }
+  .canvas-bg .b1 { width: 360px; height: 360px; left: -80px; top: -100px; background: rgba(123,92,246,0.30); }
+  .canvas-bg .b2 { width: 300px; height: 300px; right: -60px; bottom: -80px; background: rgba(23,184,144,0.20); animation-delay: -8s; }
+  .canvas-bg .b3 { width: 220px; height: 220px; right: 20%; top: 10%; background: rgba(255,122,61,0.15); animation-delay: -14s; }
+  @keyframes drift {
+    0%, 100% { transform: translate(0,0) scale(1); }
+    50% { transform: translate(30px, -20px) scale(1.07); }
+  }
+
+  /* Slide containers must stack above bg */
+  .slide > * { position: relative; z-index: 1; }
+</style>
+</head>
+<body>
+  <div class="viewport">
+    <div class="stage" id="stage" aria-label="BESS Intelligence pitch deck">
+      <!-- =========================== TOP CHROME =========================== -->
+      <header class="chrome">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <!-- lightning bolt -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <div class="brand-name">BESS Intelligence</div>
+            <div class="brand-sub">Qubiz · Energy Hackathon 2026</div>
+          </div>
+        </div>
+        <nav class="progress" id="progress" aria-label="Sections">
+          <button class="step active" data-step="0"><span class="num">1</span><span>The Why</span></button>
+          <button class="step" data-step="1"><span class="num">2</span><span>The How</span></button>
+          <button class="step" data-step="2"><span class="num">3</span><span>Demo</span></button>
+          <button class="step" data-step="3"><span class="num">4</span><span>Try It</span></button>
+        </nav>
+      </header>
+
+      <!-- =========================== DECK =========================== -->
+      <main class="deck" id="deck">
+
+        <!-- ================ SLIDE 1 — THE WHY ================ -->
+        <section class="slide active" data-slide="0" data-target="105">
+          <div class="canvas-bg">
+            <div class="blob b1"></div>
+            <div class="blob b2"></div>
+            <div class="blob b3"></div>
+          </div>
+
+          <header class="slide-head reveal r1">
+            <div>
+              <div class="slide-eyebrow">The Why</div>
+              <h1 class="slide-title">Volatility is the opportunity.</h1>
+            </div>
+          </header>
+
+          <div class="why-grid">
+            <div class="why-left">
+              <p class="why-statement reveal r2">
+                Energy prices <span class="underline accent">spike and crash</span> in the same hour.<br/>
+                For a battery, that isn't noise — it's <span class="accent">revenue</span>.
+              </p>
+
+              <div class="why-pills reveal r3">
+                <span class="why-pill pill-charge">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l-7 7 7 7"/></svg>
+                  Buy low — charge
+                </span>
+                <span class="why-pill pill-discharge">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l7-7-7-7"/></svg>
+                  Sell high — discharge
+                </span>
+                <span class="why-pill pill-revenue">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 7H9.5a2.5 2.5 0 0 0 0 5h5a2.5 2.5 0 0 1 0 5H6"/></svg>
+                  Without being a market expert
+                </span>
+              </div>
+
+              <div class="why-outcomes reveal r4">
+                <div class="outcome">
+                  <div class="outcome-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
+                  </div>
+                  <p class="outcome-title">Arbitrage revenue</p>
+                  <p class="outcome-sub">Capture the price spread, hour after hour.</p>
+                </div>
+                <div class="outcome">
+                  <div class="outcome-icon" style="background: var(--charge-soft); color: var(--charge-ink);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 10v4"/><path d="M6 11v2M10 11v2M14 11v2"/></svg>
+                  </div>
+                  <p class="outcome-title">Lower energy bills</p>
+                  <p class="outcome-sub">Self-consume when the grid is expensive.</p>
+                </div>
+                <div class="outcome">
+                  <div class="outcome-icon" style="background: var(--discharge-soft); color: var(--discharge-ink);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6l-8-4z"/></svg>
+                  </div>
+                  <p class="outcome-title">Protect the asset</p>
+                  <p class="outcome-sub">Avoid cycles that shorten battery life.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="why-right reveal r5">
+              <div class="card price-card">
+                <div class="price-head">
+                  <div>
+                    <div class="price-label">Day-ahead market · 24h</div>
+                    <div class="price-title">€/MWh — when to act</div>
+                  </div>
+                  <div class="price-legend">
+                    <span><span class="legend-dot" style="background: var(--charge);"></span>Charge</span>
+                    <span><span class="legend-dot" style="background: var(--discharge);"></span>Discharge</span>
+                  </div>
+                </div>
+
+                <div class="price-svg-wrap">
+                  <svg class="price-svg" viewBox="0 0 800 420" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="priceGrad" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#7B5CF6" stop-opacity="0.30"/>
+                        <stop offset="100%" stop-color="#7B5CF6" stop-opacity="0"/>
+                      </linearGradient>
+                      <pattern id="grid" width="80" height="60" patternUnits="userSpaceOnUse">
+                        <path d="M 80 0 L 0 0 0 60" fill="none" stroke="rgba(123,92,246,0.08)" stroke-width="1"/>
+                      </pattern>
+                    </defs>
+                    <rect width="800" height="420" fill="url(#grid)" />
+
+                    <!-- Hour axis labels -->
+                    <g font-family="-apple-system, sans-serif" font-size="10" fill="#8C8AA8">
+                      <text x="40"  y="410">00</text>
+                      <text x="180" y="410">06</text>
+                      <text x="380" y="410">12</text>
+                      <text x="580" y="410">18</text>
+                      <text x="760" y="410">24</text>
+                    </g>
+
+                    <!-- Area under line -->
+                    <path class="price-area" d="
+                      M 0,260
+                      C 60,250 100,300 140,330
+                      C 180,360 220,360 260,330
+                      C 300,300 340,200 380,180
+                      C 420,160 460,210 500,200
+                      C 540,190 580,90  620,80
+                      C 660,70  700,140 740,170
+                      C 770,195 790,210 800,210
+                      L 800,400 L 0,400 Z
+                    "/>
+
+                    <!-- Price line -->
+                    <path class="price-line" d="
+                      M 0,260
+                      C 60,250 100,300 140,330
+                      C 180,360 220,360 260,330
+                      C 300,300 340,200 380,180
+                      C 420,160 460,210 500,200
+                      C 540,190 580,90  620,80
+                      C 660,70  700,140 740,170
+                      C 770,195 790,210 800,210
+                    "/>
+
+                    <!-- Charge marker (low point ~ x=240, y=355) -->
+                    <g class="price-marker marker-charge" transform="translate(240,355)">
+                      <circle class="marker-pulse" r="8" fill="#17B890" opacity="0.5"/>
+                      <circle r="9" fill="#17B890" stroke="white" stroke-width="3"/>
+                      <g transform="translate(16,-32)">
+                        <rect width="106" height="28" rx="14" fill="#DDF7EE"/>
+                        <text x="14" y="18" font-family="-apple-system, sans-serif" font-size="13" font-weight="600" fill="#0B7757">▼ Charge · 12 €</text>
+                      </g>
+                    </g>
+
+                    <!-- Discharge marker (peak ~ x=620, y=80) -->
+                    <g class="price-marker marker-discharge" transform="translate(620,80)">
+                      <circle class="marker-pulse" r="8" fill="#FF7A3D" opacity="0.5"/>
+                      <circle r="9" fill="#FF7A3D" stroke="white" stroke-width="3"/>
+                      <g transform="translate(-148,-38)">
+                        <rect width="138" height="28" rx="14" fill="#FFE8DE"/>
+                        <text x="12" y="18" font-family="-apple-system, sans-serif" font-size="13" font-weight="600" fill="#B8461A">▲ Discharge · 218 €</text>
+                      </g>
+                    </g>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================ SLIDE 2 — THE HOW ================ -->
+        <section class="slide" data-slide="1" data-target="105">
+          <div class="canvas-bg">
+            <div class="blob b1"></div>
+            <div class="blob b2"></div>
+          </div>
+
+          <header class="slide-head reveal r1">
+            <div>
+              <div class="slide-eyebrow">The How</div>
+              <h1 class="slide-title">One requirements doc → a deployed product.</h1>
+            </div>
+          </header>
+
+          <div class="how-grid">
+            <div class="how-pipeline">
+              <!-- Five-agent pipeline diagram -->
+              <div class="card pipeline-card reveal r2">
+                <div class="pipeline-card-title">Spec-driven development with AI agents</div>
+                <h3 class="pipeline-card-sub">5 specialised Copilot agents</h3>
+
+                <div class="pipeline-flow">
+                  <svg class="flow-svg" viewBox="0 0 880 460" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                      <marker id="flowArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#7B5CF6"/>
+                      </marker>
+                    </defs>
+
+                    <!-- Requirements doc -->
+                    <g transform="translate(40,180)">
+                      <rect class="agent-node entry" x="0" y="0" width="160" height="100" rx="14"/>
+                      <g transform="translate(80,40)" stroke="#7B5CF6" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="-14" y="-18" width="28" height="34" rx="3"/>
+                        <line x1="-9" y1="-10" x2="9" y2="-10"/>
+                        <line x1="-9" y1="-4" x2="9" y2="-4"/>
+                        <line x1="-9" y1="2" x2="5" y2="2"/>
+                      </g>
+                      <text class="agent-label" x="80" y="80">Requirements doc</text>
+                    </g>
+
+                    <!-- Story parser -->
+                    <g transform="translate(260,180)">
+                      <rect class="agent-node" x="0" y="0" width="160" height="100" rx="14"/>
+                      <g transform="translate(80,38)" stroke="#7B5CF6" stroke-width="1.6" fill="none" stroke-linecap="round">
+                        <circle cx="-8" cy="0" r="6"/><circle cx="8" cy="0" r="6"/>
+                        <line x1="-2" y1="0" x2="2" y2="0"/>
+                      </g>
+                      <text class="agent-label" x="80" y="68">Story parser</text>
+                      <text class="agent-sub" x="80" y="86">→ feature specs</text>
+                    </g>
+
+                    <!-- Planner -->
+                    <g transform="translate(480,180)">
+                      <rect class="agent-node" x="0" y="0" width="160" height="100" rx="14"/>
+                      <g transform="translate(80,38)" stroke="#7B5CF6" stroke-width="1.6" fill="none" stroke-linecap="round">
+                        <rect x="-12" y="-8" width="24" height="16" rx="2"/>
+                        <line x1="-8" y1="-3" x2="8" y2="-3"/>
+                        <line x1="-8" y1="2" x2="4" y2="2"/>
+                      </g>
+                      <text class="agent-label" x="80" y="68">Planner</text>
+                      <text class="agent-sub" x="80" y="86">→ tasks</text>
+                    </g>
+
+                    <!-- Backend / Frontend / Tester (fan out) -->
+                    <g transform="translate(700,40)">
+                      <rect class="agent-node" x="0" y="0" width="160" height="86" rx="14"/>
+                      <g transform="translate(80,32)" stroke="#7B5CF6" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="-12,-8 -18,0 -12,8"/>
+                        <polyline points="12,-8 18,0 12,8"/>
+                      </g>
+                      <text class="agent-label" x="80" y="60">Backend dev</text>
+                    </g>
+                    <g transform="translate(700,180)">
+                      <rect class="agent-node" x="0" y="0" width="160" height="100" rx="14"/>
+                      <g transform="translate(80,40)" stroke="#7B5CF6" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="-14" y="-10" width="28" height="20" rx="2"/>
+                        <line x1="-14" y1="-4" x2="14" y2="-4"/>
+                      </g>
+                      <text class="agent-label" x="80" y="68">Frontend dev</text>
+                    </g>
+                    <g transform="translate(700,320)">
+                      <rect class="agent-node" x="0" y="0" width="160" height="86" rx="14"/>
+                      <g transform="translate(80,32)" stroke="#7B5CF6" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="-10,-2 -4,4 8,-8"/>
+                        <circle cx="0" cy="0" r="14"/>
+                      </g>
+                      <text class="agent-label" x="80" y="60">Tester</text>
+                      <text class="agent-sub" x="80" y="76">e2e for every AC</text>
+                    </g>
+
+                    <!-- Arrows: doc → parser → planner → fan-out -->
+                    <path class="flow-arrow" d="M 200,230 L 260,230"/>
+                    <path class="flow-arrow" d="M 420,230 L 480,230"/>
+                    <path class="flow-arrow" d="M 640,230 C 670,230 680,90  700,80"/>
+                    <path class="flow-arrow" d="M 640,230 L 700,230"/>
+                    <path class="flow-arrow" d="M 640,230 C 670,230 680,360 700,360"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Tech stack tiles -->
+              <div class="card pipeline-card reveal r3">
+                <div class="pipeline-card-title">The technology</div>
+                <h3 class="pipeline-card-sub">Production stack</h3>
+                <div class="stack-grid">
+                  <div class="stack-tile">
+                    <div class="stack-icon icon-be">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v4H4z"/><path d="M4 14h16v4H4z"/><circle cx="7" cy="8" r=".7" fill="currentColor"/><circle cx="7" cy="16" r=".7" fill="currentColor"/></svg>
+                    </div>
+                    <div class="stack-text">
+                      <p class="stack-title">.NET 10 API</p>
+                      <p class="stack-sub">Backend services</p>
+                    </div>
+                  </div>
+                  <div class="stack-tile">
+                    <div class="stack-icon icon-db">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+                    </div>
+                    <div class="stack-text">
+                      <p class="stack-title">SQL Database</p>
+                      <p class="stack-sub">1y synthetic market + telemetry</p>
+                    </div>
+                  </div>
+                  <div class="stack-tile">
+                    <div class="stack-icon icon-ml">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
+                    </div>
+                    <div class="stack-text">
+                      <p class="stack-title">ML.NET — 2 models</p>
+                      <p class="stack-sub">Solar forecast + degradation</p>
+                    </div>
+                  </div>
+                  <div class="stack-tile">
+                    <div class="stack-icon icon-fe">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>
+                    </div>
+                    <div class="stack-text">
+                      <p class="stack-title">React frontend</p>
+                      <p class="stack-sub">Fleet, replay, forecasts</p>
+                    </div>
+                  </div>
+                  <div class="stack-tile">
+                    <div class="stack-icon icon-ot">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg>
+                    </div>
+                    <div class="stack-text">
+                      <p class="stack-title">OpenTelemetry</p>
+                      <p class="stack-sub">→ Azure App Insights</p>
+                    </div>
+                  </div>
+                  <div class="stack-tile">
+                    <div class="stack-icon icon-az">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l6-12 4 8-4 4z"/><path d="M14 14l3-6 3 10z"/></svg>
+                    </div>
+                    <div class="stack-text">
+                      <p class="stack-title">Deployed to Azure</p>
+                      <p class="stack-sub">CI/CD via GitHub Actions</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="dispatch-row">
+                  <span class="dispatch-chip"><span class="dnum">7</span>step dispatch engine</span>
+                  <span class="dispatch-chip" style="color: var(--charge-ink); border-color: var(--charge);">forecast → window → health → recommendation</span>
+                  <span class="dispatch-chip" style="color: var(--discharge-ink); border-color: var(--discharge);">+ confidence score</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- CI/CD ribbon -->
+            <div class="cicd reveal r4">
+              <div class="cicd-step">
+                <span class="cicd-dot">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                </span>
+                Code
+              </div>
+              <div class="cicd-arrow"></div>
+              <div class="cicd-step">
+                <span class="cicd-dot">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h12"/></svg>
+                </span>
+                Build
+              </div>
+              <div class="cicd-arrow"></div>
+              <div class="cicd-step">
+                <span class="cicd-dot" style="border-color: var(--charge); color: var(--charge);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+                Test
+              </div>
+              <div class="cicd-arrow"></div>
+              <div class="cicd-step">
+                <span class="cicd-dot" style="border-color: var(--discharge); color: var(--discharge);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 6"/><path d="M12 22l-3-3M12 22l3-3M12 22V8"/></svg>
+                </span>
+                Deploy
+              </div>
+              <div class="cicd-arrow"></div>
+              <div class="cicd-step" style="color: var(--primary-ink); font-weight: 600;">
+                <span class="cicd-dot" style="background: var(--primary); border-color: var(--primary); color: white;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+                </span>
+                Live
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================ SLIDE 3 — DEMO ================ -->
+        <section class="slide" data-slide="2" data-target="0">
+          <header class="slide-head reveal r1">
+            <div>
+              <div class="slide-eyebrow">Demo</div>
+              <h1 class="slide-title">See it in action.</h1>
+            </div>
+          </header>
+
+          <div class="demo-stage reveal r2">
+            <div class="video-frame" id="videoFrame">
+              <video id="demoVideo" controls preload="metadata" playsinline>
+                <source src="assets/demo.mp4" type="video/mp4" />
+              </video>
+              <div class="video-placeholder" id="videoPlaceholder">
+                <div class="vp-inner">
+                  <div class="vp-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                  </div>
+                  <h2 class="vp-title">Demo video lands here</h2>
+                  <p class="vp-sub">
+                    Drop the recorded MP4 into the deck folder as
+                    <span class="vp-path">presentation/assets/demo.mp4</span>
+                    — it will load automatically the next time the deck opens.
+                  </p>
+                  <span class="vp-or">or, right now</span>
+                  <label class="vp-drop">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Pick a video file
+                    <input type="file" id="videoPicker" accept="video/*"/>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================ SLIDE 4 — QR ================ -->
+        <section class="slide" data-slide="3" data-target="0">
+          <div class="canvas-bg">
+            <div class="blob b1"></div>
+            <div class="blob b3"></div>
+          </div>
+
+          <header class="slide-head reveal r1">
+            <div>
+              <div class="slide-eyebrow">Try it yourself</div>
+              <h1 class="slide-title">Scan to open the live dashboard.</h1>
+            </div>
+          </header>
+
+          <div class="qr-stage">
+            <div class="qr-copy">
+              <p class="qr-headline reveal r2">
+                Point your phone’s <span class="accent">camera</span> at the code.
+              </p>
+              <p class="qr-sub reveal r3">
+                The app is running on Azure — fleet view, market forecasts, and the dispatch engine, live.
+              </p>
+              <div class="qr-url-row reveal r4">
+                <span class="qr-url" id="urlText">https://bess-etedb8f7a5gcdrdb.westeurope-01.azurewebsites.net/</span>
+              </div>
+              <div class="credits reveal r5">Built for the April 2026 Energy Hackathon · Qubiz</div>
+            </div>
+
+            <div class="qr-frame reveal r2" aria-label="QR code linking to the live BESS Intelligence Dashboard">
+              <svg class="qr" viewBox="0 0 49 49" xmlns="http://www.w3.org/2000/svg" id="qrSvg" aria-hidden="true">
+                <!-- QR path injected by script to keep markup readable -->
+              </svg>
+              <div class="qr-logo-mask" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- =========================== FOOTER =========================== -->
+      <footer class="footer">
+        <div class="timer">
+          <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+          <span id="timerText">0:00</span>
+          <span class="timer-target" id="timerTarget">/ 1:45</span>
+        </div>
+        <div class="nav-hint">
+          <span class="key">←</span><span class="key">→</span>
+          <span>or click anywhere</span>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+<script>
+(function() {
+  // -------- QR path injection (keeps the markup readable) --------
+  const QR_PATH_DATA = "M2,2H3V3H2zM3,2H4V3H3zM4,2H5V3H4zM5,2H6V3H5zM6,2H7V3H6zM7,2H8V3H7zM8,2H9V3H8zM11,2H12V3H11zM12,2H13V3H12zM22,2H23V3H22zM27,2H28V3H27zM29,2H30V3H29zM30,2H31V3H30zM31,2H32V3H31zM32,2H33V3H32zM35,2H36V3H35zM38,2H39V3H38zM40,2H41V3H40zM41,2H42V3H41zM42,2H43V3H42zM43,2H44V3H43zM44,2H45V3H44zM45,2H46V3H45zM46,2H47V3H46zM2,3H3V4H2zM8,3H9V4H8zM10,3H11V4H10zM11,3H12V4H11zM12,3H13V4H12zM13,3H14V4H13zM16,3H17V4H16zM17,3H18V4H17zM21,3H22V4H21zM22,3H23V4H22zM24,3H25V4H24zM25,3H26V4H25zM29,3H30V4H29zM30,3H31V4H30zM31,3H32V4H31zM33,3H34V4H33zM34,3H35V4H34zM37,3H38V4H37zM40,3H41V4H40zM46,3H47V4H46zM2,4H3V5H2zM4,4H5V5H4zM5,4H6V5H5zM6,4H7V5H6zM8,4H9V5H8zM11,4H12V5H11zM12,4H13V5H12zM15,4H16V5H15zM16,4H17V5H16zM17,4H18V5H17zM21,4H22V5H21zM22,4H23V5H22zM24,4H25V5H24zM27,4H28V5H27zM28,4H29V5H28zM29,4H30V5H29zM30,4H31V5H30zM35,4H36V5H35zM37,4H38V5H37zM40,4H41V5H40zM42,4H43V5H42zM43,4H44V5H43zM44,4H45V5H44zM46,4H47V5H46zM2,5H3V6H2zM4,5H5V6H4zM5,5H6V6H5zM6,5H7V6H6zM8,5H9V6H8zM16,5H17V6H16zM17,5H18V6H17zM20,5H21V6H20zM22,5H23V6H22zM23,5H24V6H23zM25,5H26V6H25zM26,5H27V6H26zM30,5H31V6H30zM32,5H33V6H32zM37,5H38V6H37zM38,5H39V6H38zM40,5H41V6H40zM42,5H43V6H42zM43,5H44V6H43zM44,5H45V6H44zM46,5H47V6H46zM2,6H3V7H2zM4,6H5V7H4zM5,6H6V7H5zM6,6H7V7H6zM8,6H9V7H8zM11,6H12V7H11zM16,6H17V7H16zM18,6H19V7H18zM20,6H21V7H20zM21,6H22V7H21zM22,6H23V7H22zM23,6H24V7H23zM24,6H25V7H24zM25,6H26V7H25zM26,6H27V7H26zM28,6H29V7H28zM31,6H32V7H31zM32,6H33V7H32zM35,6H36V7H35zM36,6H37V7H36zM37,6H38V7H37zM38,6H39V7H38zM40,6H41V7H40zM42,6H43V7H42zM43,6H44V7H43zM44,6H45V7H44zM46,6H47V7H46zM2,7H3V8H2zM8,7H9V8H8zM10,7H11V8H10zM11,7H12V8H11zM12,7H13V8H12zM13,7H14V8H13zM15,7H16V8H15zM16,7H17V8H16zM18,7H19V8H18zM20,7H21V8H20zM21,7H22V8H21zM22,7H23V8H22zM26,7H27V8H26zM40,7H41V8H40zM46,7H47V8H46zM2,8H3V9H2zM3,8H4V9H3zM4,8H5V9H4zM5,8H6V9H5zM6,8H7V9H6zM7,8H8V9H7zM8,8H9V9H8zM10,8H11V9H10zM12,8H13V9H12zM14,8H15V9H14zM16,8H17V9H16zM18,8H19V9H18zM20,8H21V9H20zM22,8H23V9H22zM24,8H25V9H24zM26,8H27V9H26zM28,8H29V9H28zM30,8H31V9H30zM32,8H33V9H32zM34,8H35V9H34zM36,8H37V9H36zM38,8H39V9H38zM40,8H41V9H40zM41,8H42V9H41zM42,8H43V9H42zM43,8H44V9H43zM44,8H45V9H44zM45,8H46V9H45zM46,8H47V9H46zM10,9H11V10H10zM12,9H13V10H12zM14,9H15V10H14zM17,9H18V10H17zM18,9H19V10H18zM19,9H20V10H19zM20,9H21V10H20zM21,9H22V10H21zM22,9H23V10H22zM26,9H27V10H26zM28,9H29V10H28zM30,9H31V10H30zM31,9H32V10H31zM33,9H34V10H33zM34,9H35V10H34zM38,9H39V10H38zM6,10H7V11H6zM7,10H8V11H7zM8,10H9V11H8zM9,10H10V11H9zM13,10H14V11H13zM14,10H15V11H14zM15,10H16V11H15zM16,10H17V11H16zM17,10H18V11H17zM20,10H21V11H20zM22,10H23V11H22zM23,10H24V11H23zM24,10H25V11H24zM25,10H26V11H25zM26,10H27V11H26zM27,10H28V11H27zM28,10H29V11H28zM30,10H31V11H30zM34,10H35V11H34zM35,10H36V11H35zM36,10H37V11H36zM37,10H38V11H37zM40,10H41V11H40zM41,10H42V11H41zM45,10H46V11H45zM6,11H7V12H6zM7,11H8V12H7zM10,11H11V12H10zM14,11H15V12H14zM15,11H16V12H15zM16,11H17V12H16zM17,11H18V12H17zM18,11H19V12H18zM21,11H22V12H21zM23,11H24V12H23zM29,11H30V12H29zM31,11H32V12H31zM32,11H33V12H32zM34,11H35V12H34zM37,11H38V12H37zM38,11H39V12H38zM40,11H41V12H40zM44,11H45V12H44zM45,11H46V12H45zM2,12H3V13H2zM3,12H4V13H3zM4,12H5V13H4zM7,12H8V13H7zM8,12H9V13H8zM9,12H10V13H9zM10,12H11V13H10zM11,12H12V13H11zM18,12H19V13H18zM22,12H23V13H22zM24,12H25V13H24zM25,12H26V13H25zM26,12H27V13H26zM27,12H28V13H27zM28,12H29V13H28zM29,12H30V13H29zM30,12H31V13H30zM31,12H32V13H31zM32,12H33V13H32zM33,12H34V13H33zM35,12H36V13H35zM40,12H41V13H40zM42,12H43V13H42zM43,12H44V13H43zM44,12H45V13H44zM45,12H46V13H45zM4,13H5V14H4zM5,13H6V14H5zM10,13H11V14H10zM11,13H12V14H11zM12,13H13V14H12zM16,13H17V14H16zM17,13H18V14H17zM18,13H19V14H18zM21,13H22V14H21zM22,13H23V14H22zM23,13H24V14H23zM24,13H25V14H24zM26,13H27V14H26zM29,13H30V14H29zM33,13H34V14H33zM34,13H35V14H34zM36,13H37V14H36zM37,13H38V14H37zM3,14H4V15H3zM4,14H5V15H4zM6,14H7V15H6zM7,14H8V15H7zM8,14H9V15H8zM10,14H11V15H10zM11,14H12V15H11zM12,14H13V15H12zM13,14H14V15H13zM15,14H16V15H15zM16,14H17V15H16zM18,14H19V15H18zM19,14H20V15H19zM23,14H24V15H23zM24,14H25V15H24zM28,14H29V15H28zM29,14H30V15H29zM30,14H31V15H30zM31,14H32V15H31zM34,14H35V15H34zM36,14H37V15H36zM37,14H38V15H37zM39,14H40V15H39zM40,14H41V15H40zM43,14H44V15H43zM45,14H46V15H45zM46,14H47V15H46zM2,15H3V16H2zM5,15H6V16H5zM6,15H7V16H6zM10,15H11V16H10zM11,15H12V16H11zM14,15H15V16H14zM17,15H18V16H17zM18,15H19V16H18zM19,15H20V16H19zM21,15H22V16H21zM22,15H23V16H22zM23,15H24V16H23zM25,15H26V16H25zM26,15H27V16H26zM27,15H28V16H27zM28,15H29V16H28zM30,15H31V16H30zM31,15H32V16H31zM32,15H33V16H32zM34,15H35V16H34zM37,15H38V16H37zM38,15H39V16H38zM40,15H41V16H40zM2,16H3V17H2zM6,16H7V17H6zM8,16H9V17H8zM9,16H10V17H9zM10,16H11V17H10zM12,16H13V17H12zM13,16H14V17H13zM20,16H21V17H20zM23,16H24V17H23zM25,16H26V17H25zM29,16H30V17H29zM31,16H32V17H31zM32,16H33V17H32zM33,16H34V17H33zM39,16H40V17H39zM40,16H41V17H40zM41,16H42V17H41zM42,16H43V17H42zM43,16H44V17H43zM45,16H46V17H45zM3,17H4V18H3zM6,17H7V18H6zM7,17H8V18H7zM10,17H11V18H10zM11,17H12V18H11zM12,17H13V18H12zM15,17H16V18H15zM22,17H23V18H22zM23,17H24V18H23zM24,17H25V18H24zM26,17H27V18H26zM27,17H28V18H27zM28,17H29V18H28zM30,17H31V18H30zM32,17H33V18H32zM34,17H35V18H34zM35,17H36V18H35zM36,17H37V18H36zM39,17H40V18H39zM41,17H42V18H41zM3,18H4V19H3zM5,18H6V19H5zM7,18H8V19H7zM8,18H9V19H8zM10,18H11V19H10zM13,18H14V19H13zM14,18H15V19H14zM15,18H16V19H15zM16,18H17V19H16zM19,18H20V19H19zM20,18H21V19H20zM22,18H23V19H22zM26,18H27V19H26zM29,18H30V19H29zM30,18H31V19H30zM34,18H35V19H34zM35,18H36V19H35zM36,18H37V19H36zM39,18H40V19H39zM40,18H41V19H40zM43,18H44V19H43zM46,18H47V19H46zM2,19H3V20H2zM3,19H4V20H3zM4,19H5V20H4zM5,19H6V20H5zM6,19H7V20H6zM9,19H10V20H9zM11,19H12V20H11zM13,19H14V20H13zM14,19H15V20H14zM16,19H17V20H16zM17,19H18V20H17zM19,19H20V20H19zM21,19H22V20H21zM24,19H25V20H24zM25,19H26V20H25zM27,19H28V20H27zM29,19H30V20H29zM30,19H31V20H30zM31,19H32V20H31zM34,19H35V20H34zM35,19H36V20H35zM37,19H38V20H37zM38,19H39V20H38zM40,19H41V20H40zM42,19H43V20H42zM43,19H44V20H43zM44,19H45V20H44zM45,19H46V20H45zM2,20H3V21H2zM5,20H6V21H5zM7,20H8V21H7zM8,20H9V21H8zM9,20H10V21H9zM10,20H11V21H10zM12,20H13V21H12zM14,20H15V21H14zM16,20H17V21H16zM17,20H18V21H17zM19,20H20V21H19zM20,20H21V21H20zM22,20H23V21H22zM24,20H25V21H24zM25,20H26V21H25zM27,20H28V21H27zM29,20H30V21H29zM30,20H31V21H30zM31,20H32V21H31zM33,20H34V21H33zM37,20H38V21H37zM40,20H41V21H40zM41,20H42V21H41zM42,20H43V21H42zM45,20H46V21H45zM6,21H7V22H6zM11,21H12V22H11zM12,21H13V22H12zM13,21H14V22H13zM14,21H15V22H14zM15,21H16V22H15zM16,21H17V22H16zM17,21H18V22H17zM18,21H19V22H18zM19,21H20V22H19zM20,21H21V22H20zM22,21H23V22H22zM23,21H24V22H23zM26,21H27V22H26zM30,21H31V22H30zM31,21H32V22H31zM33,21H34V22H33zM34,21H35V22H34zM35,21H36V22H35zM37,21H38V22H37zM38,21H39V22H38zM39,21H40V22H39zM40,21H41V22H40zM41,21H42V22H41zM45,21H46V22H45zM3,22H4V23H3zM4,22H5V23H4zM5,22H6V23H5zM6,22H7V23H6zM7,22H8V23H7zM8,22H9V23H8zM9,22H10V23H9zM10,22H11V23H10zM14,22H15V23H14zM16,22H17V23H16zM17,22H18V23H17zM18,22H19V23H18zM19,22H20V23H19zM20,22H21V23H20zM22,22H23V23H22zM23,22H24V23H23zM24,22H25V23H24zM25,22H26V23H25zM26,22H27V23H26zM28,22H29V23H28zM29,22H30V23H29zM31,22H32V23H31zM32,22H33V23H32zM34,22H35V23H34zM36,22H37V23H36zM38,22H39V23H38zM39,22H40V23H39zM40,22H41V23H40zM41,22H42V23H41zM42,22H43V23H42zM43,22H44V23H43zM2,23H3V24H2zM6,23H7V24H6zM10,23H11V24H10zM11,23H12V24H11zM13,23H14V24H13zM14,23H15V24H14zM17,23H18V24H17zM20,23H21V24H20zM21,23H22V24H21zM22,23H23V24H22zM26,23H27V24H26zM27,23H28V24H27zM28,23H29V24H28zM32,23H33V24H32zM34,23H35V24H34zM35,23H36V24H35zM37,23H38V24H37zM38,23H39V24H38zM42,23H43V24H42zM44,23H45V24H44zM45,23H46V24H45zM2,24H3V25H2zM3,24H4V25H3zM4,24H5V25H4zM6,24H7V25H6zM8,24H9V25H8zM10,24H11V25H10zM11,24H12V25H11zM12,24H13V25H12zM13,24H14V25H13zM16,24H17V25H16zM18,24H19V25H18zM20,24H21V25H20zM21,24H22V25H21zM22,24H23V25H22zM24,24H25V25H24zM26,24H27V25H26zM28,24H29V25H28zM33,24H34V25H33zM37,24H38V25H37zM38,24H39V25H38zM40,24H41V25H40zM42,24H43V25H42zM43,24H44V25H43zM44,24H45V25H44zM45,24H46V25H45zM3,25H4V26H3zM4,25H5V26H4zM6,25H7V26H6zM10,25H11V26H10zM11,25H12V26H11zM13,25H14V26H13zM14,25H15V26H14zM15,25H16V26H15zM16,25H17V26H16zM19,25H20V26H19zM22,25H23V26H22zM26,25H27V26H26zM27,25H28V26H27zM29,25H30V26H29zM30,25H31V26H30zM31,25H32V26H31zM32,25H33V26H32zM34,25H35V26H34zM37,25H38V26H37zM38,25H39V26H38zM42,25H43V26H42zM46,25H47V26H46zM2,26H3V27H2zM6,26H7V27H6zM7,26H8V27H7zM8,26H9V27H8zM9,26H10V27H9zM10,26H11V27H10zM13,26H14V27H13zM17,26H18V27H17zM20,26H21V27H20zM22,26H23V27H22zM23,26H24V27H23zM24,26H25V27H24zM25,26H26V27H25zM26,26H27V27H26zM27,26H28V27H27zM29,26H30V27H29zM31,26H32V27H31zM33,26H34V27H33zM34,26H35V27H34zM36,26H37V27H36zM38,26H39V27H38zM39,26H40V27H39zM40,26H41V27H40zM41,26H42V27H41zM42,26H43V27H42zM2,27H3V28H2zM5,27H6V28H5zM10,27H11V28H10zM11,27H12V28H11zM12,27H13V28H12zM13,27H14V28H13zM14,27H15V28H14zM15,27H16V28H15zM18,27H19V28H18zM19,27H20V28H19zM20,27H21V28H20zM21,27H22V28H21zM24,27H25V28H24zM25,27H26V28H25zM26,27H27V28H26zM27,27H28V28H27zM28,27H29V28H28zM29,27H30V28H29zM31,27H32V28H31zM32,27H33V28H32zM33,27H34V28H33zM34,27H35V28H34zM35,27H36V28H35zM37,27H38V28H37zM38,27H39V28H38zM39,27H40V28H39zM41,27H42V28H41zM43,27H44V28H43zM44,27H45V28H44zM45,27H46V28H45zM3,28H4V29H3zM4,28H5V29H4zM7,28H8V29H7zM8,28H9V29H8zM17,28H18V29H17zM21,28H22V29H21zM23,28H24V29H23zM24,28H25V29H24zM27,28H28V29H27zM29,28H30V29H29zM32,28H33V29H32zM33,28H34V29H33zM35,28H36V29H35zM39,28H40V29H39zM42,28H43V29H42zM45,28H46V29H45zM2,29H3V30H2zM3,29H4V30H3zM4,29H5V30H4zM5,29H6V30H5zM11,29H12V30H11zM12,29H13V30H12zM13,29H14V30H13zM14,29H15V30H14zM17,29H18V30H17zM19,29H20V30H19zM22,29H23V30H22zM24,29H25V30H24zM25,29H26V30H25zM29,29H30V30H29zM31,29H32V30H31zM34,29H35V30H34zM39,29H40V30H39zM40,29H41V30H40zM42,29H43V30H42zM43,29H44V30H43zM45,29H46V30H45zM2,30H3V31H2zM4,30H5V31H4zM5,30H6V31H5zM8,30H9V31H8zM16,30H17V31H16zM17,30H18V31H17zM18,30H19V31H18zM20,30H21V31H20zM21,30H22V31H21zM23,30H24V31H23zM24,30H25V31H24zM25,30H26V31H25zM27,30H28V31H27zM29,30H30V31H29zM31,30H32V31H31zM34,30H35V31H34zM35,30H36V31H35zM36,30H37V31H36zM39,30H40V31H39zM40,30H41V31H40zM41,30H42V31H41zM42,30H43V31H42zM46,30H47V31H46zM5,31H6V32H5zM10,31H11V32H10zM12,31H13V32H12zM14,31H15V32H14zM15,31H16V32H15zM18,31H19V32H18zM19,31H20V32H19zM20,31H21V32H20zM21,31H22V32H21zM25,31H26V32H25zM31,31H32V32H31zM32,31H33V32H32zM33,31H34V32H33zM35,31H36V32H35zM37,31H38V32H37zM38,31H39V32H38zM40,31H41V32H40zM41,31H42V32H41zM44,31H45V32H44zM2,32H3V33H2zM3,32H4V33H3zM4,32H5V33H4zM5,32H6V33H5zM7,32H8V33H7zM8,32H9V33H8zM10,32H11V33H10zM12,32H13V33H12zM14,32H15V33H14zM17,32H18V33H17zM18,32H19V33H18zM22,32H23V33H22zM23,32H24V33H23zM24,32H25V33H24zM25,32H26V33H25zM26,32H27V33H26zM28,32H29V33H28zM30,32H31V33H30zM32,32H33V33H32zM35,32H36V33H35zM37,32H38V33H37zM41,32H42V33H41zM42,32H43V33H42zM44,32H45V33H44zM45,32H46V33H45zM2,33H3V34H2zM3,33H4V34H3zM6,33H7V34H6zM7,33H8V34H7zM9,33H10V34H9zM10,33H11V34H10zM11,33H12V34H11zM14,33H15V34H14zM15,33H16V34H15zM17,33H18V34H17zM19,33H20V34H19zM20,33H21V34H20zM21,33H22V34H21zM23,33H24V34H23zM24,33H25V34H24zM27,33H28V34H27zM29,33H30V34H29zM33,33H34V34H33zM34,33H35V34H34zM36,33H37V34H36zM38,33H39V34H38zM40,33H41V34H40zM42,33H43V34H42zM45,33H46V34H45zM46,33H47V34H46zM6,34H7V35H6zM7,34H8V35H7zM8,34H9V35H8zM10,34H11V35H10zM12,34H13V35H12zM13,34H14V35H13zM14,34H15V35H14zM15,34H16V35H15zM16,34H17V35H16zM17,34H18V35H17zM18,34H19V35H18zM22,34H23V35H22zM24,34H25V35H24zM25,34H26V35H25zM27,34H28V35H27zM29,34H30V35H29zM30,34H31V35H30zM32,34H33V35H32zM34,34H35V35H34zM35,34H36V35H35zM36,34H37V35H36zM38,34H39V35H38zM40,34H41V35H40zM41,34H42V35H41zM42,34H43V35H42zM4,35H5V36H4zM6,35H7V36H6zM7,35H8V36H7zM11,35H12V36H11zM12,35H13V36H12zM13,35H14V36H13zM15,35H16V36H15zM19,35H20V36H19zM20,35H21V36H20zM21,35H22V36H21zM22,35H23V36H22zM23,35H24V36H23zM24,35H25V36H24zM25,35H26V36H25zM28,35H29V36H28zM29,35H30V36H29zM32,35H33V36H32zM34,35H35V36H34zM35,35H36V36H35zM37,35H38V36H37zM40,35H41V36H40zM41,35H42V36H41zM43,35H44V36H43zM44,35H45V36H44zM45,35H46V36H45zM6,36H7V37H6zM8,36H9V37H8zM10,36H11V37H10zM15,36H16V37H15zM16,36H17V37H16zM17,36H18V37H17zM19,36H20V37H19zM20,36H21V37H20zM21,36H22V37H21zM28,36H29V37H28zM29,36H30V37H29zM30,36H31V37H30zM33,36H34V37H33zM35,36H36V37H35zM39,36H40V37H39zM42,36H43V37H42zM43,36H44V37H43zM45,36H46V37H45zM3,37H4V38H3zM4,37H5V38H4zM5,37H6V38H5zM6,37H7V38H6zM10,37H11V38H10zM11,37H12V38H11zM13,37H14V38H13zM15,37H16V38H15zM20,37H21V38H20zM23,37H24V38H23zM24,37H25V38H24zM25,37H26V38H25zM26,37H27V38H26zM27,37H28V38H27zM31,37H32V38H31zM32,37H33V38H32zM33,37H34V38H33zM34,37H35V38H34zM36,37H37V38H36zM38,37H39V38H38zM39,37H40V38H39zM40,37H41V38H40zM41,37H42V38H41zM45,37H46V38H45zM46,37H47V38H46zM2,38H3V39H2zM5,38H6V39H5zM6,38H7V39H6zM8,38H9V39H8zM9,38H10V39H9zM10,38H11V39H10zM12,38H13V39H12zM13,38H14V39H13zM14,38H15V39H14zM15,38H16V39H15zM17,38H18V39H17zM19,38H20V39H19zM21,38H22V39H21zM22,38H23V39H22zM23,38H24V39H23zM24,38H25V39H24zM25,38H26V39H25zM26,38H27V39H26zM27,38H28V39H27zM33,38H34V39H33zM34,38H35V39H34zM38,38H39V39H38zM39,38H40V39H39zM40,38H41V39H40zM41,38H42V39H41zM42,38H43V39H42zM43,38H44V39H43zM45,38H46V39H45zM46,38H47V39H46zM10,39H11V40H10zM11,39H12V40H11zM14,39H15V40H14zM16,39H17V40H16zM20,39H21V40H20zM22,39H23V40H22zM26,39H27V40H26zM27,39H28V40H27zM28,39H29V40H28zM29,39H30V40H29zM31,39H32V40H31zM32,39H33V40H32zM34,39H35V40H34zM35,39H36V40H35zM37,39H38V40H37zM38,39H39V40H38zM42,39H43V40H42zM43,39H44V40H43zM44,39H45V40H44zM45,39H46V40H45zM2,40H3V41H2zM3,40H4V41H3zM4,40H5V41H4zM5,40H6V41H5zM6,40H7V41H6zM7,40H8V41H7zM8,40H9V41H8zM10,40H11V41H10zM11,40H12V41H11zM15,40H16V41H15zM17,40H18V41H17zM20,40H21V41H20zM22,40H23V41H22zM24,40H25V41H24zM26,40H27V41H26zM29,40H30V41H29zM30,40H31V41H30zM31,40H32V41H31zM32,40H33V41H32zM35,40H36V41H35zM38,40H39V41H38zM40,40H41V41H40zM42,40H43V41H42zM43,40H44V41H43zM2,41H3V42H2zM8,41H9V42H8zM10,41H11V42H10zM11,41H12V42H11zM12,41H13V42H12zM13,41H14V42H13zM15,41H16V42H15zM16,41H17V42H16zM17,41H18V42H17zM18,41H19V42H18zM19,41H20V42H19zM22,41H23V42H22zM26,41H27V42H26zM27,41H28V42H27zM28,41H29V42H28zM29,41H30V42H29zM32,41H33V42H32zM34,41H35V42H34zM36,41H37V42H36zM38,41H39V42H38zM42,41H43V42H42zM45,41H46V42H45zM46,41H47V42H46zM2,42H3V43H2zM4,42H5V43H4zM5,42H6V43H5zM6,42H7V43H6zM8,42H9V43H8zM10,42H11V43H10zM13,42H14V43H13zM14,42H15V43H14zM15,42H16V43H15zM16,42H17V43H16zM18,42H19V43H18zM20,42H21V43H20zM22,42H23V43H22zM23,42H24V43H23zM24,42H25V43H24zM25,42H26V43H25zM26,42H27V43H26zM29,42H30V43H29zM32,42H33V43H32zM34,42H35V43H34zM35,42H36V43H35zM38,42H39V43H38zM39,42H40V43H39zM40,42H41V43H40zM41,42H42V43H41zM42,42H43V43H42zM45,42H46V43H45zM46,42H47V43H46zM2,43H3V44H2zM4,43H5V44H4zM5,43H6V44H5zM6,43H7V44H6zM8,43H9V44H8zM11,43H12V44H11zM12,43H13V44H12zM13,43H14V44H13zM15,43H16V44H15zM16,43H17V44H16zM17,43H18V44H17zM18,43H19V44H18zM20,43H21V44H20zM21,43H22V44H21zM22,43H23V44H22zM27,43H28V44H27zM30,43H31V44H30zM31,43H32V44H31zM32,43H33V44H32zM33,43H34V44H33zM35,43H36V44H35zM37,43H38V44H37zM39,43H40V44H39zM40,43H41V44H40zM41,43H42V44H41zM42,43H43V44H42zM43,43H44V44H43zM44,43H45V44H44zM2,44H3V45H2zM4,44H5V45H4zM5,44H6V45H5zM6,44H7V45H6zM8,44H9V45H8zM11,44H12V45H11zM12,44H13V45H12zM13,44H14V45H13zM17,44H18V45H17zM21,44H22V45H21zM22,44H23V45H22zM25,44H26V45H25zM27,44H28V45H27zM30,44H31V45H30zM31,44H32V45H31zM32,44H33V45H32zM37,44H38V45H37zM39,44H40V45H39zM40,44H41V45H40zM41,44H42V45H41zM42,44H43V45H42zM43,44H44V45H43zM2,45H3V46H2zM8,45H9V46H8zM12,45H13V46H12zM14,45H15V46H14zM15,45H16V46H15zM18,45H19V46H18zM20,45H21V46H20zM21,45H22V46H21zM22,45H23V46H22zM23,45H24V46H23zM24,45H25V46H24zM25,45H26V46H25zM26,45H27V46H26zM28,45H29V46H28zM29,45H30V46H29zM30,45H31V46H30zM32,45H33V46H32zM33,45H34V46H33zM34,45H35V46H34zM36,45H37V46H36zM37,45H38V46H37zM38,45H39V46H38zM42,45H43V46H42zM2,46H3V47H2zM3,46H4V47H3zM4,46H5V47H4zM5,46H6V47H5zM6,46H7V47H6zM7,46H8V47H7zM8,46H9V47H8zM11,46H12V47H11zM12,46H13V47H12zM13,46H14V47H13zM14,46H15V47H14zM15,46H16V47H15zM16,46H17V47H16zM20,46H21V47H20zM21,46H22V47H21zM22,46H23V47H22zM25,46H26V47H25zM27,46H28V47H27zM28,46H29V47H28zM34,46H35V47H34zM35,46H36V47H35zM38,46H39V47H38zM41,46H42V47H41zM42,46H43V47H42zM46,46H47V47H46z";
+  const qrSvg = document.getElementById('qrSvg');
+  if (qrSvg && QR_PATH_DATA && !QR_PATH_DATA.startsWith("__")) {
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', QR_PATH_DATA);
+    qrSvg.appendChild(p);
+  }
+
+  // -------- Auto-scale stage to viewport while preserving 1920x1080 --------
+  const stage = document.getElementById('stage');
+  function fit() {
+    const sx = window.innerWidth / 1920;
+    const sy = window.innerHeight / 1080;
+    const s = Math.min(sx, sy);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  // -------- Slide navigation --------
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const steps = Array.from(document.querySelectorAll('.step'));
+  let current = 0;
+  let timerStart = Date.now();
+  let timerHandle = null;
+
+  function startTimer() {
+    timerStart = Date.now();
+    if (timerHandle) clearInterval(timerHandle);
+    const target = parseInt(slides[current].dataset.target || '0', 10);
+    const tEl = document.getElementById('timerText');
+    const fEl = document.getElementById('timerFill');
+    const ttEl = document.getElementById('timerTarget');
+    if (target > 0) {
+      ttEl.textContent = '/ ' + Math.floor(target / 60) + ':' + String(target % 60).padStart(2, '0');
+      ttEl.style.display = '';
+      fEl.parentElement.style.visibility = '';
+    } else {
+      ttEl.textContent = '';
+      fEl.style.width = '0%';
+    }
+    timerHandle = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - timerStart) / 1000);
+      tEl.textContent = Math.floor(elapsed / 60) + ':' + String(elapsed % 60).padStart(2, '0');
+      if (target > 0) {
+        const pct = Math.min(100, (elapsed / target) * 100);
+        fEl.style.width = pct + '%';
+        if (pct >= 100) fEl.style.background = 'linear-gradient(90deg, #FF7A3D, #F05B8A)';
+        else fEl.style.background = '';
+      }
+    }, 200);
+  }
+
+  function go(idx) {
+    if (idx < 0 || idx >= slides.length || idx === current) return;
+    slides[current].classList.remove('active');
+    slides[current].classList.add('prev');
+    steps[current].classList.remove('active');
+    current = idx;
+    slides.forEach((s, i) => {
+      if (i !== current) s.classList.remove('active');
+      if (i !== current) s.classList.remove('prev');
+    });
+    slides[current].classList.add('active');
+    steps[current].classList.add('active');
+    startTimer();
+    handleSlideEnter(current);
+  }
+
+  function next() { go(Math.min(current + 1, slides.length - 1)); }
+  function prev() { go(Math.max(current - 1, 0)); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'PageDown':
+      case ' ':
+        e.preventDefault(); next(); break;
+      case 'ArrowLeft':
+      case 'PageUp':
+        e.preventDefault(); prev(); break;
+      case 'Home': go(0); break;
+      case 'End':  go(slides.length - 1); break;
+      case 'f':
+      case 'F':
+        if (document.fullscreenElement) document.exitFullscreen();
+        else document.documentElement.requestFullscreen();
+        break;
+      default:
+        if (/^[1-4]$/.test(e.key)) go(parseInt(e.key, 10) - 1);
+    }
+  });
+
+  // Click navigation: left half = prev, right half = next, but ignore clicks on interactive controls
+  document.addEventListener('click', (e) => {
+    const interactive = e.target.closest('button, a, input, label, video, .vp-drop, .step');
+    if (interactive) return;
+    const x = e.clientX;
+    if (x < window.innerWidth * 0.35) prev();
+    else next();
+  });
+
+  // Step buttons
+  steps.forEach((btn, i) => btn.addEventListener('click', (e) => { e.stopPropagation(); go(i); }));
+
+  // -------- Demo slide: load video lifecycle --------
+  const demoVideo = document.getElementById('demoVideo');
+  const placeholder = document.getElementById('videoPlaceholder');
+  const picker = document.getElementById('videoPicker');
+  const frame = document.getElementById('videoFrame');
+
+  function showPlaceholder(show) {
+    if (show) placeholder.classList.remove('hidden');
+    else placeholder.classList.add('hidden');
+  }
+
+  // Hide placeholder if the video can play
+  demoVideo.addEventListener('loadeddata', () => showPlaceholder(false));
+  demoVideo.addEventListener('error', () => showPlaceholder(true));
+  // If preload fails (file missing), the video stays empty — placeholder visible.
+  setTimeout(() => {
+    if (!demoVideo.duration) showPlaceholder(true);
+  }, 800);
+
+  // File picker
+  picker.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) loadLocalVideo(f);
+  });
+
+  // Drag and drop
+  ['dragenter','dragover'].forEach(ev =>
+    frame.addEventListener(ev, (e) => { e.preventDefault(); frame.classList.add('dragover'); }));
+  ['dragleave','drop'].forEach(ev =>
+    frame.addEventListener(ev, (e) => { e.preventDefault(); frame.classList.remove('dragover'); }));
+  frame.addEventListener('drop', (e) => {
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f && f.type.startsWith('video/')) loadLocalVideo(f);
+  });
+
+  function loadLocalVideo(file) {
+    const url = URL.createObjectURL(file);
+    demoVideo.src = url;
+    demoVideo.load();
+    demoVideo.play().catch(()=>{});
+    showPlaceholder(false);
+  }
+
+  // -------- Per-slide enter handlers --------
+  function handleSlideEnter(idx) {
+    if (idx === 2) {
+      // Demo slide: try to autoplay the video on entry
+      if (demoVideo.readyState >= 2) {
+        demoVideo.currentTime = 0;
+        demoVideo.play().catch(()=>{});
+      }
+    } else {
+      // Pause when leaving the demo slide
+      try { demoVideo.pause(); } catch(_){}
+    }
+  }
+
+  // Kick off the timer for the first slide
+  startTimer();
+})();
+</script>
+</body>
+</html>
