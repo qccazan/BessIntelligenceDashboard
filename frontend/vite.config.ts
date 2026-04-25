@@ -4,5 +4,19 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    {
+      name: 'presentation-rewrite',
+      configureServer(server) {
+        server.middlewares.use((req, _res, next) => {
+          if (req.url === '/presentation' || req.url === '/presentation/') {
+            req.url = '/presentation/index.html';
+          }
+          next();
+        });
+      },
+    },
+    react(),
+    tailwindcss(),
+  ],
 })
