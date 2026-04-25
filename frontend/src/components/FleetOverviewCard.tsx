@@ -137,7 +137,7 @@ export function FleetOverviewCard({ selectedAssetId, onSelectAsset }: FleetOverv
       </div>
 
       {/* Table */}
-      <div className="border border-[rgba(88,70,180,0.14)] rounded-[10px] overflow-hidden">
+      <div className="border border-[rgba(88,70,180,0.14)] rounded-[10px] overflow-x-auto">
         <table className="w-full border-collapse text-[13px] tabular-nums" data-testid="fleet-table">
           <thead>
             <tr>
