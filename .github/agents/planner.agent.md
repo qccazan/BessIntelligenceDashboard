@@ -61,6 +61,22 @@ After the user approves the plan:
    - Tests: start both servers, run `cd e2e && npx playwright test`
 5. If any step fails, diagnose and fix before moving on.
 
+### Phase 4.5 — Test Impact Analysis
+
+After every implementation change, **always** analyse the existing E2E tests for breakage:
+
+1. **Search all test files** in `e2e/tests/` for references to changed behaviour:
+   - Text/label assertions that reference changed copy (e.g. renamed headings, unit changes like kWh → MWh)
+   - Hardcoded count assertions (e.g. `toBe(96)`) that depend on data shape changes
+   - Behavioural assertions that conflict with new logic (e.g. "stops at end" vs "loops at end")
+   - Regex patterns that match old formats (e.g. `/\d+\s*kWh/` when values are now MWh)
+   - `parseInt` / `parseFloat` mismatches when value formats change (e.g. integers → decimals)
+2. **Update every affected test** to match the new behaviour and value formats.
+3. **Run the full test suite**: start both servers, then `cd e2e && npx playwright test`.
+   - Fix any test failures caused by the implementation before reporting results.
+   - Distinguish failures caused by the current change vs pre-existing/flaky failures.
+4. Only move to the Report phase once all change-related tests pass.
+
 ### Phase 5 — Report
 
 Summarize what was delivered:
