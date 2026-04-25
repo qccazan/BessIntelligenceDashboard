@@ -6,38 +6,38 @@ public class TemplateExplanationGenerator : IExplanationGenerator
     {
         if (ctx.IsHold)
         {
-            var explanation = $"Hold recommended. {ctx.HoldReason ?? "Insufficient price spread for profitable dispatch."} " +
-                              $"The fleet is held to protect battery longevity. " +
-                              $"Confidence in this assessment remains at the reported level.";
+            var explanation = $"No action recommended right now. " +
+                              $"{ctx.HoldReason ?? "The difference between buying and selling prices is too small to make a profit."} " +
+                              $"Batteries stay on standby to avoid unnecessary wear.";
             return Task.FromResult(explanation);
         }
 
-        string windContext = ctx.AvgWindMs switch
+        string windReason = ctx.AvgWindMs switch
         {
-            > 7 => "high wind output across the North Sea",
-            >= 5 => "sustained overnight wind generation",
-            _ => "lower overnight demand"
+            > 7 => "strong North Sea winds overnight",
+            >= 5 => "steady wind energy production overnight",
+            _ => "low electricity usage overnight"
         };
 
         string spreadComparison = ctx.SpreadMultiplier switch
         {
-            _ when ctx.SpreadMultiplier > ctx.Avg30dSpread * 1.3 => "well above",
-            _ when ctx.SpreadMultiplier > ctx.Avg30dSpread * 1.0 => "above",
-            _ => "in line with"
+            _ when ctx.SpreadMultiplier > ctx.Avg30dSpread * 1.3 => $"nearly double",
+            _ when ctx.SpreadMultiplier > ctx.Avg30dSpread * 1.0 => $"above",
+            _ => "roughly in line with"
         };
 
-        string solarContext = "";
-        if (ctx.DispatchScenario is "Wind+Solar" or "Solar only")
-        {
-            solarContext = $" Solar panels expected to cover {ctx.SolarCoveragePct:F0}% of charging demand, reducing grid import costs.";
-        }
+        string solarContext = ctx.SolarCoveragePct > 0
+            ? $" Solar covers {ctx.SolarCoveragePct:F0}% of the charging energy, cutting grid costs."
+            : " Solar covers 0% at that hour, so all cheap power comes from the grid.";
 
-        var result = $"EPEX SPOT NL overnight prices fall to ~{ctx.ChargePrice:F0} EUR/MWh between {ctx.ChargeStart} " +
-                     $"and {ctx.ChargeEnd} \u2014 the cheapest window of the next 24 hours, driven by {windContext} " +
-                     $"\u2014 before recovering to ~{ctx.DischargePrice:F0} EUR/MWh during the evening demand ramp at " +
-                     $"{ctx.DischargeStart}\u2013{ctx.DischargeEnd}. The {ctx.SpreadMultiplier:F1}\u00d7 spread is {spreadComparison} " +
-                     $"the 30-day average of {ctx.Avg30dSpread:F1}\u00d7.{solarContext} " +
-                     $"Estimated capture: ~EUR {ctx.EstimatedCapture:F0} for the coordinated cycle.";
+        var result = $"Electricity is cheapest between {ctx.ChargeStart}\u2013{ctx.ChargeEnd} " +
+                     $"(\u20AC{ctx.ChargePrice:F0}/MWh) due to {windReason}, " +
+                     $"then jumps to \u20AC{ctx.DischargePrice:F0}/MWh during the evening rush at " +
+                     $"{ctx.DischargeStart}\u2013{ctx.DischargeEnd} when usage spikes. " +
+                     $"That\u2019s a {ctx.SpreadMultiplier:F1}\u00d7 price gap \u2014 " +
+                     $"{spreadComparison} the 30-day average of {ctx.Avg30dSpread:F1}\u00d7.{solarContext} " +
+                     $"By charging batteries at night and selling that energy back in the evening, " +
+                     $"the system earns an estimated \u20AC{ctx.EstimatedCapture:F0} in one cycle.";
 
         return Task.FromResult(result);
     }

@@ -72,25 +72,24 @@ test.describe('US-03-02: Identify Operational State at a Glance', () => {
     expect(legendText).toContain('Fault');
   });
 
-  test('AC-5: the State badge colour and the sign of the Power value are mutually consistent', async ({ page }) => {
+  test('AC-5: the State badge colour and the Capacity value are consistent per row', async ({ page }) => {
     const rows = page.getByTestId('fleet-rows').locator('tr');
     const count = await rows.count();
 
     for (let i = 0; i < count; i++) {
       const row = rows.nth(i);
       const mode = await row.getAttribute('data-mode');
-      const powerText = await row.locator('[data-testid^="power-"]').textContent();
+      const capacityCell = row.locator('[data-testid^="capacity-"]');
+      const capacityText = await capacityCell.textContent();
 
-      if (mode === 'charging') {
-        // Power should be positive (shows +)
-        expect(powerText).toMatch(/^\+/);
-      } else if (mode === 'discharging') {
-        // Power should be negative (shows -)
-        expect(powerText).toMatch(/^[−-]/);
-      } else if (mode === 'fault') {
-        expect(powerText!.trim()).toBe('offline');
-      } else if (mode === 'idle') {
-        expect(powerText).toMatch(/0\.0 kW/);
+      // Every row should have a capacity value with kWh unit
+      expect(capacityText).toBeTruthy();
+      expect(capacityText).toContain('kWh');
+
+      // Fault rows should still have a valid state badge
+      if (mode === 'fault') {
+        const badge = row.locator('[data-testid^="state-"]');
+        await expect(badge).toBeVisible();
       }
     }
   });

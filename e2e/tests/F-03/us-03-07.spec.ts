@@ -7,13 +7,13 @@ test.describe('US-03-07: Responsive Table on Narrow Viewports', () => {
     await expect(page.getByTestId('fleet-overview')).toBeVisible();
   });
 
-  test('AC-1: on viewports ≥ 900px wide, all seven columns are visible', async ({ page }) => {
+  test('AC-1: on viewports ≥ 900px wide, all six columns are visible', async ({ page }) => {
     // Default viewport is 1280px
     const headers = page.getByTestId('fleet-table').locator('thead th');
-    await expect(headers).toHaveCount(7);
+    await expect(headers).toHaveCount(6);
 
     // All should be visible
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 6; i++) {
       await expect(headers.nth(i)).toBeVisible();
     }
   });
