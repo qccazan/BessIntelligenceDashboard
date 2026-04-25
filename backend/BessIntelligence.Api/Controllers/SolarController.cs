@@ -16,6 +16,28 @@ public class SolarController : ControllerBase
         _context = context;
     }
 
+    [HttpGet("summary")]
+    public async Task<ActionResult<SolarSummaryDto>> GetSummary()
+    {
+        var installations = await _context.SolarInstallations.ToListAsync();
+        var totalCapacityMwp = Math.Round(installations.Sum(i => i.CapacityKwp) / 1000.0, 2);
+        var totalPanelCount = installations.Sum(i => i.PanelCount);
+
+        var tz = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "W. Europe Standard Time" : "Europe/Amsterdam");
+        var localNow = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, tz);
+        var midnightToday = new DateTimeOffset(localNow.Year, localNow.Month, localNow.Day, 0, 0, 0, localNow.Offset);
+        var midnightYesterday = midnightToday.AddDays(-1);
+
+        var yesterdayProductionKwh = await _context.SolarProductions
+            .Where(p => p.Timestamp >= midnightYesterday && p.Timestamp < midnightToday)
+            .SumAsync(p => p.ProductionKw * 0.25);
+
+        var yesterdayProductionMwh = Math.Round(yesterdayProductionKwh / 1000.0, 2);
+
+        return Ok(new SolarSummaryDto(totalCapacityMwp, totalPanelCount, yesterdayProductionMwh));
+    }
+
     [HttpGet("forecast")]
     public async Task<ActionResult<List<SolarForecastDto>>> GetForecast([FromQuery] DateOnly? date)
     {

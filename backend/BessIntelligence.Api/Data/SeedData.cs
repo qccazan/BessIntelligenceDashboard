@@ -379,8 +379,8 @@ public static class SeedData
         var tz = AmsterdamTz;
         var now = DateTimeOffset.UtcNow;
         var localNow = TimeZoneInfo.ConvertTime(now, tz);
-        int minute = (localNow.Minute / 15) * 15;
-        var end = new DateTimeOffset(localNow.Year, localNow.Month, localNow.Day, localNow.Hour, minute, 0, localNow.Offset);
+        // End at midnight today so that yesterday always has a full 24 h of data
+        var end = new DateTimeOffset(localNow.Year, localNow.Month, localNow.Day, 0, 0, 0, localNow.Offset);
         var start = end.AddDays(-7);
 
         var priceLookup = prices
