@@ -5,8 +5,6 @@ using BessIntelligence.Api.Engine;
 using BessIntelligence.Api.Engine.ML;
 using BessIntelligence.Api.Jobs;
 using Microsoft.EntityFrameworkCore;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Trace;
 using System.ClientModel;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,10 +16,6 @@ if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_
     {
         options.ConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
     });
-}
-else
-{
-    builder.Logging.AddOpenTelemetry(logging => logging.AddConsoleExporter());
 }
 
 // EF Core — InMemory for CI, SQL Server for dev (LocalDB) and production (Azure SQL)
