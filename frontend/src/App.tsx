@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { PresentationPage } from './pages/PresentationPage'
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -42,6 +43,7 @@ export function App() {
           )
         }
       />
+      <Route path="/presentation" element={<PresentationPage />} />
     </Routes>
   )
 }
