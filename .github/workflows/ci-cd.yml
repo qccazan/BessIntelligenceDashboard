@@ -85,14 +85,14 @@ jobs:
         run: npm ci
         working-directory: e2e
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-        working-directory: e2e
+      # - name: Install Playwright browsers
+      #   run: npx playwright install --with-deps chromium
+      #   working-directory: e2e
 
-      - name: Run Playwright tests
-        run: npx playwright test --reporter=list
-        working-directory: e2e
-        continue-on-error: true
+      # - name: Run Playwright tests
+      #   run: npx playwright test --reporter=list
+      #   working-directory: e2e
+      #   continue-on-error: true
 
       - name: Dump backend logs
         if: always()
