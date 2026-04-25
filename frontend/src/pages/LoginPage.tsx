@@ -11,7 +11,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (username === 'admin' && password === 'admin') {
+    if (username.toLowerCase() === 'admin' && password.toLowerCase() === 'admin') {
       setError('')
       onLogin()
     } else {

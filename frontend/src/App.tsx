@@ -4,14 +4,18 @@ import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 
 export function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => sessionStorage.getItem('isAuthenticated') === 'true'
+  )
   const navigate = useNavigate()
 
   const handleLogin = () => {
+    sessionStorage.setItem('isAuthenticated', 'true')
     setIsAuthenticated(true)
   }
 
   const handleLogout = () => {
+    sessionStorage.removeItem('isAuthenticated')
     setIsAuthenticated(false)
     navigate('/')
   }
