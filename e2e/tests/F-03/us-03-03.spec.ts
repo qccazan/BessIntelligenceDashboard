@@ -21,31 +21,18 @@ test.describe('US-03-03: Identify Fault Assets Immediately', () => {
     }
   });
 
-  test('AC-2: the Power cell for a fault asset displays "offline"', async ({ page }) => {
+  test('AC-2: the Capacity cell for a fault asset displays its capacity in kWh', async ({ page }) => {
     const faultRows = page.getByTestId('fleet-rows').locator('tr[data-mode="fault"]');
     const count = await faultRows.count();
     expect(count).toBeGreaterThanOrEqual(1);
 
     for (let i = 0; i < count; i++) {
-      const powerText = await faultRows.nth(i).locator('[data-testid^="power-"]').textContent();
-      expect(powerText!.trim()).toBe('offline');
+      const capacityText = await faultRows.nth(i).locator('[data-testid^="capacity-"]').textContent();
+      expect(capacityText!.trim()).toMatch(/\d+.*kWh/);
     }
   });
 
-  test('AC-3: the Next Action cell for a fault asset displays "Hold" and "—"', async ({ page }) => {
-    const faultRows = page.getByTestId('fleet-rows').locator('tr[data-mode="fault"]');
-    const count = await faultRows.count();
-    expect(count).toBeGreaterThanOrEqual(1);
-
-    for (let i = 0; i < count; i++) {
-      const actionText = await faultRows.nth(i).locator('[data-testid^="action-"]').first().textContent();
-      expect(actionText!.trim()).toBe('Hold');
-      const windowText = await faultRows.nth(i).locator('[data-testid^="action-window-"]').textContent();
-      expect(windowText!.trim()).toBe('—');
-    }
-  });
-
-  test('AC-4: the State badge for a fault asset is pink and labelled "Fault"', async ({ page }) => {
+  test('AC-3: the State badge for a fault asset is pink and labelled "Fault"', async ({ page }) => {
     const faultRows = page.getByTestId('fleet-rows').locator('tr[data-mode="fault"]');
     const count = await faultRows.count();
     expect(count).toBeGreaterThanOrEqual(1);

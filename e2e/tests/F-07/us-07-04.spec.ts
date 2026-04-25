@@ -4,6 +4,8 @@ import { login } from '../../helpers/login';
 test.describe('US-07-04: AI Explainability Sentence', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
+    await page.getByTestId('generate-forecast-btn').click();
+    await expect(page.getByTestId('recommendation-block')).toBeVisible({ timeout: 5000 });
   });
 
   test('AC-1: explanatory sentence is visible below the recommendation row', async ({ page }) => {

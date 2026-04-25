@@ -4,6 +4,8 @@ import { login } from '../../helpers/login';
 test.describe('US-07-02: Charge and Discharge Zone Overlays', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
+    await page.getByTestId('generate-forecast-btn').click();
+    await expect(page.getByTestId('recommendation-block')).toBeVisible({ timeout: 5000 });
   });
 
   test('AC-1: a hatched teal zone is overlaid in the low-price window', async ({ page }) => {

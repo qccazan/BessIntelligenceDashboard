@@ -4,6 +4,8 @@ import { login } from '../../helpers/login';
 test.describe('US-07-01: Day-Ahead Price Forecast Chart', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
+    await page.getByTestId('generate-forecast-btn').click();
+    await expect(page.getByTestId('price-chart')).toBeVisible({ timeout: 5000 });
   });
 
   test('AC-1: chart renders a continuous price curve spanning 24 hours', async ({ page }) => {

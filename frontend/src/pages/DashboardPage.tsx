@@ -120,12 +120,6 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
           onSelectAsset={setSelectedAssetId}
         />
 
-        {/* Market Forecast Card (F-07) */}
-        <MarketForecastCard
-          selectedAssetId={selectedAssetId}
-          onSelectAsset={setSelectedAssetId}
-        />
-
         {/* Current State Card (F-04) */}
         <CurrentStateCard asset={selectedAsset} />
 
@@ -134,6 +128,12 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
           selectedAssetCode={selectedAssetId}
           capacity={selectedAsset?.capacityKwh ?? 1000}
           asset={selectedAsset}
+        />
+
+        {/* Market Forecast Card (F-07) */}
+        <MarketForecastCard
+          selectedAssetId={selectedAssetId}
+          onSelectAsset={setSelectedAssetId}
         />
       </div>
 

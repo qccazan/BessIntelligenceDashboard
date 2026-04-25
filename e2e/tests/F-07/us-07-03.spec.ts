@@ -6,6 +6,8 @@ const API_URL = process.env.API_URL || 'http://127.0.0.1:5000';
 test.describe('US-07-03: AI Portfolio Recommendation Block', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
+    await page.getByTestId('generate-forecast-btn').click();
+    await expect(page.getByTestId('recommendation-block')).toBeVisible({ timeout: 5000 });
   });
 
   test('AC-1: recommendation block is visible inside the Market Forecast card', async ({ page }) => {
@@ -84,6 +86,8 @@ test.describe('US-07-03: AI Portfolio Recommendation Block', () => {
     });
 
     await login(page);
+    await page.getByTestId('generate-forecast-btn').click();
+    await expect(page.getByTestId('recommendation-block')).toBeVisible({ timeout: 5000 });
 
     const holdMessage = page.getByTestId('hold-message');
     await expect(holdMessage).toBeVisible();
@@ -103,6 +107,8 @@ test.describe('US-07-03: AI Portfolio Recommendation Block', () => {
     });
 
     await login(page);
+    await page.getByTestId('generate-forecast-btn').click();
+    await expect(page.getByTestId('recommendation-block')).toBeVisible({ timeout: 5000 });
 
     const confidence = page.getByTestId('rec-confidence');
     await expect(confidence).toBeVisible();

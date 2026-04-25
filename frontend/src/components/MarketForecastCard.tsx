@@ -15,6 +15,8 @@ export function MarketForecastCard({ selectedAssetId, onSelectAsset }: MarketFor
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [forecastVisible, setForecastVisible] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     Promise.all([getMarketPrices(), getLatestRecommendation()])
@@ -25,6 +27,15 @@ export function MarketForecastCard({ selectedAssetId, onSelectAsset }: MarketFor
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
+
+  function handleGenerate() {
+    setGenerating(true);
+    const delay = 500 + Math.random() * 1500;
+    setTimeout(() => {
+      setGenerating(false);
+      setForecastVisible(true);
+    }, delay);
+  }
 
   const updatedTime = recommendation
     ? new Date(recommendation.generatedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
@@ -59,8 +70,36 @@ export function MarketForecastCard({ selectedAssetId, onSelectAsset }: MarketFor
         </div>
       )}
 
+      {/* Generate AI Forecast button */}
+      {!loading && !forecastVisible && !generating && recommendation && (
+        <div className="flex justify-center py-8">
+          <button
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-[#7B5CF6] text-white text-sm font-medium cursor-pointer hover:bg-[#6A4BE0] transition-colors duration-150"
+            data-testid="generate-forecast-btn"
+            onClick={handleGenerate}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M12.95 3.05l-1.41 1.41M4.46 11.54l-1.41 1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+            Generate AI Forecast
+          </button>
+        </div>
+      )}
+
+      {/* Generating animation */}
+      {generating && (
+        <div className="flex flex-col items-center justify-center py-10 gap-3" data-testid="generating-indicator">
+          <div className="relative w-10 h-10">
+            <div className="absolute inset-0 rounded-full border-[3px] border-[#F0ECFE]" />
+            <div className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-[#7B5CF6] animate-spin" />
+          </div>
+          <span className="text-sm text-[#4A30B5] font-medium animate-pulse">Generating AI forecast…</span>
+        </div>
+      )}
+
       {/* Recommendation block */}
-      {recommendation && (
+      {forecastVisible && recommendation && (
         <div
           className="rounded-[10px] p-4 px-[18px] mb-4 border border-[rgba(123,92,246,0.2)]"
           style={{ background: 'linear-gradient(135deg, #F0ECFE 0%, #DFECFF 100%)' }}
@@ -91,7 +130,7 @@ export function MarketForecastCard({ selectedAssetId, onSelectAsset }: MarketFor
       )}
 
       {/* Price chart (US-07-01 + US-07-02) */}
-      {!loading && prices.length > 0 && recommendation && (
+      {!loading && prices.length > 0 && forecastVisible && recommendation && (
         <PriceChart prices={prices} recommendation={recommendation} />
       )}
     </div>

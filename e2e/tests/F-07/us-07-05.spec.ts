@@ -4,6 +4,8 @@ import { login } from '../../helpers/login';
 test.describe('US-07-05: Per-Battery Action Strip', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
+    await page.getByTestId('generate-forecast-btn').click();
+    await expect(page.getByTestId('recommendation-block')).toBeVisible({ timeout: 5000 });
   });
 
   test('AC-1: 12 total tiles are rendered in the per-battery strip', async ({ page }) => {
@@ -48,6 +50,8 @@ test.describe('US-07-05: Per-Battery Action Strip', () => {
 
     // Login triggers navigation to /dashboard, which mounts MarketForecastCard
     await login(page);
+    await page.getByTestId('generate-forecast-btn').click();
+    await expect(page.getByTestId('recommendation-block')).toBeVisible({ timeout: 5000 });
 
     const track = page.getByTestId('pb-track');
     const tiles = track.locator('[data-testid^="pb-tile-"]');

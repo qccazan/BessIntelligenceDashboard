@@ -7,14 +7,13 @@ interface FleetOverviewCardProps {
   onSelectAsset: (assetId: string) => void;
 }
 
-const STATE_COLOURS: Record<string, { icon: string; badge: string; badgeText: string; dot: string; barFill: string; powerText: string }> = {
+const STATE_COLOURS: Record<string, { icon: string; badge: string; badgeText: string; dot: string; barFill: string }> = {
   charging: {
     icon: 'bg-[#17B890]',
     badge: 'bg-[#DDF7EE]',
     badgeText: 'text-[#0B7757]',
     dot: 'bg-[#17B890]',
     barFill: 'bg-[#17B890]',
-    powerText: 'text-[#0B7757]',
   },
   discharging: {
     icon: 'bg-[#FF7A3D]',
@@ -22,7 +21,6 @@ const STATE_COLOURS: Record<string, { icon: string; badge: string; badgeText: st
     badgeText: 'text-[#B8461A]',
     dot: 'bg-[#FF7A3D]',
     barFill: 'bg-[#FF7A3D]',
-    powerText: 'text-[#B8461A]',
   },
   idle: {
     icon: 'bg-[#7B5CF6]',
@@ -30,7 +28,6 @@ const STATE_COLOURS: Record<string, { icon: string; badge: string; badgeText: st
     badgeText: 'text-[#5C5A7A]',
     dot: 'bg-[#8C8AA8]',
     barFill: 'bg-[#7B5CF6]',
-    powerText: 'text-[#5C5A7A]',
   },
   fault: {
     icon: 'bg-[#F05B8A]',
@@ -38,20 +35,11 @@ const STATE_COLOURS: Record<string, { icon: string; badge: string; badgeText: st
     badgeText: 'text-[#A82155]',
     dot: 'bg-[#F05B8A]',
     barFill: 'bg-[#F05B8A]',
-    powerText: 'text-[#5C5A7A]',
   },
 };
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-function formatPower(asset: FleetAsset): { text: string; colourClass: string } {
-  if (asset.mode === 'fault') return { text: 'offline', colourClass: 'text-[#5C5A7A]' };
-  if (asset.mode === 'idle') return { text: '0.0 kW', colourClass: 'text-[#5C5A7A]' };
-  const colours = STATE_COLOURS[asset.mode] ?? STATE_COLOURS.idle;
-  if (asset.powerKw > 0) return { text: `+${asset.powerKw.toFixed(1)} kW`, colourClass: colours.powerText };
-  return { text: `${asset.powerKw.toFixed(1)} kW`, colourClass: colours.powerText };
 }
 
 export function FleetOverviewCard({ selectedAssetId, onSelectAsset }: FleetOverviewCardProps) {
@@ -143,23 +131,19 @@ export function FleetOverviewCard({ selectedAssetId, onSelectAsset }: FleetOverv
             <tr>
               <th className="text-left text-[10px] font-medium uppercase tracking-[0.05em] text-[#5C5A7A] px-[14px] py-[10px] bg-[#F0ECFE] border-b border-[rgba(88,70,180,0.14)] whitespace-nowrap">Asset</th>
               <th className="text-left text-[10px] font-medium uppercase tracking-[0.05em] text-[#5C5A7A] px-[14px] py-[10px] bg-[#F0ECFE] border-b border-[rgba(88,70,180,0.14)] whitespace-nowrap">State</th>
-              <th className="text-right text-[10px] font-medium uppercase tracking-[0.05em] text-[#5C5A7A] px-[14px] py-[10px] bg-[#F0ECFE] border-b border-[rgba(88,70,180,0.14)] whitespace-nowrap">Power</th>
+              <th className="text-right text-[10px] font-medium uppercase tracking-[0.05em] text-[#5C5A7A] px-[14px] py-[10px] bg-[#F0ECFE] border-b border-[rgba(88,70,180,0.14)] whitespace-nowrap">Capacity</th>
               <th className="text-right text-[10px] font-medium uppercase tracking-[0.05em] text-[#5C5A7A] px-[14px] py-[10px] bg-[#F0ECFE] border-b border-[rgba(88,70,180,0.14)] whitespace-nowrap">State of charge</th>
               <th className="text-right text-[10px] font-medium uppercase tracking-[0.05em] text-[#5C5A7A] px-[14px] py-[10px] bg-[#F0ECFE] border-b border-[rgba(88,70,180,0.14)] whitespace-nowrap max-[899px]:hidden" data-column="soh">SoH</th>
               <th className="text-right text-[10px] font-medium uppercase tracking-[0.05em] text-[#5C5A7A] px-[14px] py-[10px] bg-[#F0ECFE] border-b border-[rgba(88,70,180,0.14)] whitespace-nowrap max-[899px]:hidden" data-column="temp">Temp</th>
-              <th className="text-right text-[10px] font-medium uppercase tracking-[0.05em] text-[#5C5A7A] px-[14px] py-[10px] bg-[#F0ECFE] border-b border-[rgba(88,70,180,0.14)] whitespace-nowrap">Next action</th>
             </tr>
           </thead>
           <tbody data-testid="fleet-rows">
             {pageAssets.map((asset) => {
               const isSelected = asset.code === selectedAssetId;
               const colours = STATE_COLOURS[asset.mode] ?? STATE_COLOURS.idle;
-              const power = formatPower(asset);
               const num = asset.code.split('-')[1];
               const isFault = asset.mode === 'fault';
               const tempWarn = asset.temperatureC >= 28;
-              const actionLetter = asset.nextAction === 'Charge' ? 'c' : asset.nextAction === 'Discharge' ? 'd' : 'h';
-              const actionColour = actionLetter === 'c' ? 'text-[#0B7757]' : actionLetter === 'd' ? 'text-[#B8461A]' : 'text-[#5C5A7A]';
 
               return (
                 <tr
@@ -194,9 +178,9 @@ export function FleetOverviewCard({ selectedAssetId, onSelectAsset }: FleetOverv
                     </span>
                   </td>
 
-                  {/* Power */}
+                  {/* Capacity */}
                   <td className="px-[14px] py-3 border-b border-[rgba(88,70,180,0.14)] align-middle text-right">
-                    <span className={`font-medium ${power.colourClass}`} data-testid={`power-${asset.code}`}>{power.text}</span>
+                    <span className="font-medium text-[#261761]" data-testid={`capacity-${asset.code}`}>{asset.capacityKwh.toLocaleString()} kWh</span>
                   </td>
 
                   {/* SoC */}
@@ -226,13 +210,6 @@ export function FleetOverviewCard({ selectedAssetId, onSelectAsset }: FleetOverv
                     </span>
                   </td>
 
-                  {/* Next Action */}
-                  <td className="px-[14px] py-3 border-b border-[rgba(88,70,180,0.14)] align-middle text-right">
-                    <div className="flex flex-col items-end leading-[1.2]">
-                      <span className={`text-xs font-medium ${actionColour}`} data-testid={`action-${asset.code}`}>{asset.nextAction}</span>
-                      <span className="text-[10px] text-[#8C8AA8] mt-[2px]" data-testid={`action-window-${asset.code}`}>{asset.nextActionWindow}</span>
-                    </div>
-                  </td>
                 </tr>
               );
             })}
