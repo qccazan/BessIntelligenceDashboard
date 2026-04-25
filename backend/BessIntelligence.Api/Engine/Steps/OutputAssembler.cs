@@ -4,17 +4,18 @@ namespace BessIntelligence.Api.Engine.Steps;
 
 /// <summary>
 /// Step 7: Assemble the complete D-05 AI Recommendation object with all fields populated,
-/// including natural-language explanation from template.
+/// including natural-language explanation via IExplanationGenerator.
 /// </summary>
 public class OutputAssembler
 {
-    public AiRecommendation Assemble(
+    public async Task<AiRecommendation> AssembleAsync(
         WindowOptimisationResult optimisation,
         List<BatteryAssignment> assignments,
         ConfidenceResult confidence,
         PriceSignalResult priceSignal,
         double avg30dSpreadMultiplier,
-        DateOnly targetDate)
+        DateOnly targetDate,
+        IExplanationGenerator explanationGenerator)
     {
         var generatedAt = new DateTimeOffset(targetDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
 
@@ -57,13 +58,15 @@ public class OutputAssembler
         double totalChargeKwh = optimisation.AssetScores.Sum(s => s.ChargeEnergyKwh);
         double solarCoveragePct = totalChargeKwh > 0 ? totalSolarChargeKwh / totalChargeKwh * 100 : 0;
 
-        // Generate explanation
-        string explanation = GenerateExplanation(
+        // Generate explanation via AI or template
+        var explanationContext = new ExplanationContext(
             chargePrice, dischargePrice, chargeStart, chargeEnd, dischargeStart, dischargeEnd,
             spreadMultiplier, avg30dSpreadMultiplier,
             priceSignal.DispatchScenario, priceSignal.AvgPortfolioWindMs,
-            solarCoveragePct, estimatedCapture,
+            solarCoveragePct, estimatedCapture, confidence.ConfidencePct,
             optimisation.IsHold, optimisation.HoldReason);
+
+        string explanation = await explanationGenerator.GenerateAsync(explanationContext);
 
         var recommendation = new AiRecommendation
         {
@@ -109,48 +112,5 @@ public class OutputAssembler
             "Discharge" => "Coordinated discharge",
             _ => "Hold"
         };
-    }
-
-    private static string GenerateExplanation(
-        double chargePrice, double dischargePrice,
-        string chargeStart, string chargeEnd, string dischargeStart, string dischargeEnd,
-        double spreadMultiplier, double avg30dSpread,
-        string dispatchScenario, double avgWind,
-        double solarCoveragePct, double estimatedCapture,
-        bool isHold, string? holdReason)
-    {
-        if (isHold)
-        {
-            return $"Hold recommended. {holdReason ?? "Insufficient price spread for profitable dispatch."} " +
-                   $"The fleet is held to protect battery longevity. " +
-                   $"Confidence in this assessment remains at the reported level.";
-        }
-
-        string windContext = avgWind switch
-        {
-            > 7 => "high wind output across the North Sea",
-            >= 5 => "sustained overnight wind generation",
-            _ => "lower overnight demand"
-        };
-
-        string spreadComparison = spreadMultiplier switch
-        {
-            _ when spreadMultiplier > avg30dSpread * 1.3 => "well above",
-            _ when spreadMultiplier > avg30dSpread * 1.0 => "above",
-            _ => "in line with"
-        };
-
-        string solarContext = "";
-        if (dispatchScenario is "Wind+Solar" or "Solar only")
-        {
-            solarContext = $" Solar panels expected to cover {solarCoveragePct:F0}% of charging demand, reducing grid import costs.";
-        }
-
-        return $"EPEX SPOT NL overnight prices fall to ~{chargePrice:F0} EUR/MWh between {chargeStart} " +
-               $"and {chargeEnd} \u2014 the cheapest window of the next 24 hours, driven by {windContext} " +
-               $"\u2014 before recovering to ~{dischargePrice:F0} EUR/MWh during the evening demand ramp at " +
-               $"{dischargeStart}\u2013{dischargeEnd}. The {spreadMultiplier:F1}\u00d7 spread is {spreadComparison} " +
-               $"the 30-day average of {avg30dSpread:F1}\u00d7.{solarContext} " +
-               $"Estimated capture: ~EUR {estimatedCapture:F0} for the coordinated cycle.";
     }
 }

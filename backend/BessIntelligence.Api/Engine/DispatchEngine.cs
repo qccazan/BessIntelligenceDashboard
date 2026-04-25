@@ -31,7 +31,7 @@ public class DispatchEngine
         _outputAssembler = new OutputAssembler();
     }
 
-    public AiRecommendation Run(DispatchEngineInput input, DateOnly targetDate)
+    public async Task<AiRecommendation> RunAsync(DispatchEngineInput input, DateOnly targetDate, IExplanationGenerator explanationGenerator)
     {
         // Step 1: Price signal processing (window enumeration from static prices)
         var priceSignal = _priceSignalProcessor.Process(
@@ -69,13 +69,14 @@ public class DispatchEngine
             input.SolarForecasts);
 
         // Step 7: Output assembly (D-05 + explanation)
-        var recommendation = _outputAssembler.Assemble(
+        var recommendation = await _outputAssembler.AssembleAsync(
             optimisation,
             assignments,
             confidence,
             priceSignal,
             input.EngineConfig.Avg30dSpreadMultiplier,
-            targetDate);
+            targetDate,
+            explanationGenerator);
 
         return recommendation;
     }

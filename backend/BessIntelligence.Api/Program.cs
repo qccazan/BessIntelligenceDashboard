@@ -1,10 +1,13 @@
 using Azure.Monitor.OpenTelemetry.AspNetCore;
+using Azure.AI.OpenAI;
 using BessIntelligence.Api.Data;
+using BessIntelligence.Api.Engine;
 using BessIntelligence.Api.Engine.ML;
 using BessIntelligence.Api.Jobs;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
+using System.ClientModel;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +47,25 @@ builder.Services.AddSingleton<DegradationPredictor>();
 builder.Services.AddScoped<DailySeedJob>();
 builder.Services.AddScoped<DailyEngineJob>();
 builder.Services.AddHostedService<DailyEngineHostedService>();
+
+// Explanation generator — Azure OpenAI when configured, template fallback otherwise
+var openAiEndpoint = builder.Configuration["AzureOpenAI:Endpoint"];
+if (!string.IsNullOrWhiteSpace(openAiEndpoint))
+{
+    var apiKey = builder.Configuration["AzureOpenAI:ApiKey"]!;
+    var deploymentName = builder.Configuration["AzureOpenAI:DeploymentName"] ?? "gpt-4o-mini";
+    var client = new AzureOpenAIClient(new Uri(openAiEndpoint), new ApiKeyCredential(apiKey));
+
+    builder.Services.AddSingleton<IExplanationGenerator>(sp =>
+        new AzureOpenAiExplanationGenerator(
+            client,
+            deploymentName,
+            sp.GetRequiredService<ILogger<AzureOpenAiExplanationGenerator>>()));
+}
+else
+{
+    builder.Services.AddSingleton<IExplanationGenerator, TemplateExplanationGenerator>();
+}
 
 // CORS for local React dev server
 builder.Services.AddCors(options =>

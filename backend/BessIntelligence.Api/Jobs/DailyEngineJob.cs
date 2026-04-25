@@ -17,6 +17,7 @@ public class DailyEngineJob
     private readonly SolarProductionForecaster _solarForecaster;
     private readonly DegradationPredictor _degradationPredictor;
     private readonly DailySeedJob _seedJob;
+    private readonly IExplanationGenerator _explanationGenerator;
     private readonly ILogger<DailyEngineJob> _logger;
 
     public DailyEngineJob(
@@ -24,12 +25,14 @@ public class DailyEngineJob
         SolarProductionForecaster solarForecaster,
         DegradationPredictor degradationPredictor,
         DailySeedJob seedJob,
+        IExplanationGenerator explanationGenerator,
         ILogger<DailyEngineJob> logger)
     {
         _context = context;
         _solarForecaster = solarForecaster;
         _degradationPredictor = degradationPredictor;
         _seedJob = seedJob;
+        _explanationGenerator = explanationGenerator;
         _logger = logger;
     }
 
@@ -102,7 +105,7 @@ public class DailyEngineJob
 
             // Step 4: Run the dispatch engine
             var engine = new DispatchEngine(_degradationPredictor);
-            var recommendation = engine.Run(input, tomorrow);
+            var recommendation = await engine.RunAsync(input, tomorrow, _explanationGenerator);
 
             // Step 5: Save recommendation
             _context.AiRecommendations.Add(recommendation);
