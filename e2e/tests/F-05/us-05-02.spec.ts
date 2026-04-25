@@ -103,7 +103,7 @@ test.describe('US-05-02: Animated Replay with Play / Pause', () => {
     expect(lineXAfter).toBe(lineX);
   });
 
-  test('AC-8: the animation stops automatically when the playhead reaches the last data point', async ({ page }) => {
+  test('AC-8: the animation loops automatically when the playhead reaches the last data point', async ({ page }) => {
     // Seek to near the end via scrub
     await page.getByTestId('play-btn').click(); // pause
     const scrub = page.getByTestId('scrub-bar');
@@ -112,10 +112,13 @@ test.describe('US-05-02: Animated Replay with Play / Pause', () => {
     await scrub.click({ position: { x: box!.width * 0.95, y: box!.height / 2 } });
     // Resume play
     await page.getByTestId('play-btn').click();
-    // Wait for animation to finish
-    await page.waitForTimeout(2000);
-    // Should have stopped — button should say Play again
+    // Wait for animation to reach end + 1s loop delay + restart
+    await page.waitForTimeout(3000);
+    // Should still be playing (looped) — button should say Pause
     const ariaLabel = await page.getByTestId('play-btn').getAttribute('aria-label');
-    expect(ariaLabel).toBe('Play');
+    expect(ariaLabel).toBe('Pause');
+    // Playhead should have looped back near the start
+    const lineX = await page.getByTestId('playhead-line').getAttribute('x1');
+    expect(parseFloat(lineX!)).toBeLessThan(160);
   });
 });

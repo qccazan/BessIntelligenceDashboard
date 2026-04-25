@@ -8,7 +8,7 @@ test.describe('US-05-05: Daily Energy Summary Chips', () => {
     await expect(page.getByTestId('play-btn')).toBeVisible();
   });
 
-  test('AC-1: three summary chips are visible: Charged (kWh), Discharged (kWh), Net Cycles (×)', async ({ page }) => {
+  test('AC-1: three summary chips are visible: Charged (MWh), Discharged (MWh), Net Cycles (×)', async ({ page }) => {
     await expect(page.getByTestId('chip-charged')).toBeVisible();
     await expect(page.getByTestId('chip-discharged')).toBeVisible();
     await expect(page.getByTestId('chip-cycles')).toBeVisible();
@@ -20,9 +20,9 @@ test.describe('US-05-05: Daily Energy Summary Chips', () => {
 
     // Check units
     const charged = await page.getByTestId('charged-value').textContent();
-    expect(charged).toMatch(/\d+\s*kWh/);
+    expect(charged).toMatch(/[\d.]+\s*MWh/);
     const discharged = await page.getByTestId('discharged-value').textContent();
-    expect(discharged).toMatch(/\d+\s*kWh/);
+    expect(discharged).toMatch(/[\d.]+\s*MWh/);
     const cycles = await page.getByTestId('cycles-value').textContent();
     expect(cycles).toMatch(/[\d.]+×/);
   });
@@ -41,8 +41,8 @@ test.describe('US-05-05: Daily Energy Summary Chips', () => {
       // Wait for data to load
       await expect(page.getByTestId('play-btn')).toBeVisible();
 
-      const charged = parseInt((await page.getByTestId('charged-value').textContent())!);
-      const discharged = parseInt((await page.getByTestId('discharged-value').textContent())!);
+      const charged = parseFloat((await page.getByTestId('charged-value').textContent())!);
+      const discharged = parseFloat((await page.getByTestId('discharged-value').textContent())!);
       const cycles = parseFloat((await page.getByTestId('cycles-value').textContent())!);
 
       expect(charged).toBeGreaterThan(0);
@@ -51,21 +51,21 @@ test.describe('US-05-05: Daily Energy Summary Chips', () => {
     }
   });
 
-  test('AC-3: the Charged value equals the sum of positive-power intervals × 0.25 h in kWh', async ({ page }) => {
+  test('AC-3: the Charged value equals the sum of positive-power intervals × 0.25 h in MWh', async ({ page }) => {
     // This test verifies the calculation is reasonable by checking the value is positive and in a reasonable range
     const chargedText = (await page.getByTestId('charged-value').textContent())!;
-    const charged = parseInt(chargedText);
-    // For a 500kW battery over 24h, max theoretical charge = 500 * 24 = 12000 kWh
+    const charged = parseFloat(chargedText);
+    // For a 500kW battery over 24h, max theoretical charge = 500 * 24 = 12000 kWh = 12 MWh
     // Min should be > 0
     expect(charged).toBeGreaterThan(0);
-    expect(charged).toBeLessThan(15000);
+    expect(charged).toBeLessThan(15);
   });
 
-  test('AC-4: the Discharged value equals the sum of absolute negative-power intervals × 0.25 h in kWh', async ({ page }) => {
+  test('AC-4: the Discharged value equals the sum of absolute negative-power intervals × 0.25 h in MWh', async ({ page }) => {
     const dischargedText = (await page.getByTestId('discharged-value').textContent())!;
-    const discharged = parseInt(dischargedText);
+    const discharged = parseFloat(dischargedText);
     expect(discharged).toBeGreaterThan(0);
-    expect(discharged).toBeLessThan(15000);
+    expect(discharged).toBeLessThan(15);
   });
 
   test('AC-5: the Net Cycles value equals (Charged + Discharged) ÷ 2 ÷ capacity, rounded to one decimal', async ({ page }) => {
@@ -87,8 +87,8 @@ test.describe('US-05-05: Daily Energy Summary Chips', () => {
     const dischargedAfter = await page.getByTestId('discharged-value').textContent();
     const cyclesAfter = await page.getByTestId('cycles-value').textContent();
 
-    expect(chargedAfter).toMatch(/\d+\s*kWh/);
-    expect(dischargedAfter).toMatch(/\d+\s*kWh/);
+    expect(chargedAfter).toMatch(/[\d.]+\s*MWh/);
+    expect(dischargedAfter).toMatch(/[\d.]+\s*MWh/);
     expect(cyclesAfter).toMatch(/[\d.]+×/);
   });
 });

@@ -39,6 +39,7 @@ export function ReplayCard({ selectedAssetCode, capacity, asset }: ReplayCardPro
   const [playheadIdx, setPlayheadIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const loopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrubRef = useRef<HTMLDivElement>(null);
 
   // Fetch data on asset change
@@ -72,10 +73,7 @@ export function ReplayCard({ selectedAssetCode, capacity, asset }: ReplayCardPro
     if (playing && history.length > 0) {
       intervalRef.current = setInterval(() => {
         setPlayheadIdx((prev) => {
-          if (prev >= history.length - 1) {
-            setPlaying(false);
-            return prev;
-          }
+          if (prev >= history.length - 1) return prev;
           return prev + 1;
         });
       }, STEP_MS);
@@ -85,14 +83,29 @@ export function ReplayCard({ selectedAssetCode, capacity, asset }: ReplayCardPro
     };
   }, [playing, history.length]);
 
-  const togglePlay = useCallback(() => {
-    if (playheadIdx >= history.length - 1) {
-      setPlayheadIdx(0);
-      setPlaying(true);
-    } else {
-      setPlaying((p) => !p);
+  // Auto-loop: when playhead reaches end while playing, restart after 1 s
+  useEffect(() => {
+    if (playing && history.length > 0 && playheadIdx >= history.length - 1) {
+      loopTimeoutRef.current = setTimeout(() => {
+        setPlayheadIdx(0);
+      }, 1000);
     }
-  }, [playheadIdx, history.length]);
+    return () => {
+      if (loopTimeoutRef.current) {
+        clearTimeout(loopTimeoutRef.current);
+        loopTimeoutRef.current = null;
+      }
+    };
+  }, [playing, playheadIdx, history.length]);
+
+  const togglePlay = useCallback(() => {
+    if (playing) {
+      setPlaying(false);
+    } else {
+      if (playheadIdx >= history.length - 1) setPlayheadIdx(0);
+      setPlaying(true);
+    }
+  }, [playing, playheadIdx, history.length]);
 
   const handleScrubClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!scrubRef.current || history.length === 0) return;
@@ -107,10 +120,12 @@ export function ReplayCard({ selectedAssetCode, capacity, asset }: ReplayCardPro
   const mode = current ? getMode(current.powerKw) : 'Idle';
   const pillStyle = PILL_STYLES[mode] ?? PILL_STYLES.Idle;
 
-  // Energy calculations
-  const charged = history.reduce((sum, p) => p.powerKw > 0 ? sum + p.powerKw * 0.25 : sum, 0);
-  const discharged = history.reduce((sum, p) => p.powerKw < 0 ? sum + Math.abs(p.powerKw) * 0.25 : sum, 0);
-  const netCycles = capacity > 0 ? ((charged + discharged) / 2 / capacity) : 0;
+  // Energy calculations (MWh)
+  const chargedKwh = history.reduce((sum, p) => p.powerKw > 0 ? sum + p.powerKw * 0.25 : sum, 0);
+  const dischargedKwh = history.reduce((sum, p) => p.powerKw < 0 ? sum + Math.abs(p.powerKw) * 0.25 : sum, 0);
+  const chargedMwh = chargedKwh / 1000;
+  const dischargedMwh = dischargedKwh / 1000;
+  const netCycles = capacity > 0 ? ((chargedKwh + dischargedKwh) / 2 / capacity) : 0;
 
   // SVG dimensions
   const svgW = 320;
@@ -162,7 +177,7 @@ export function ReplayCard({ selectedAssetCode, capacity, asset }: ReplayCardPro
       {/* Header */}
       <div className="flex items-start justify-between mb-3 gap-2">
         <div>
-          <p className="text-[15px] font-medium m-0">Last 24 hours — replay</p>
+          <p className="text-[15px] font-medium m-0">Yesterday — replay</p>
           <p className="text-xs text-[#8C8AA8] mt-[3px] m-0">Selected battery · Watch the day unfold</p>
         </div>
         <span
@@ -187,7 +202,7 @@ export function ReplayCard({ selectedAssetCode, capacity, asset }: ReplayCardPro
               <span className="inline-block px-[7px] py-[1px] rounded bg-[#F0ECFE] text-[#4A30B5] font-medium text-[10px] tracking-[0.03em]">{asset.chemistry}</span>
             </span>
             <span>Power rating <strong className="text-[#261761] font-medium">{asset.powerRatingKw} kW</strong></span>
-            <span>Capacity <strong className="text-[#261761] font-medium">{asset.capacityKwh.toLocaleString()} kWh</strong></span>
+            <span>Capacity <strong className="text-[#261761] font-medium">{(asset.capacityKwh / 1000).toFixed(1)} MWh</strong></span>
             <span>Duration <strong className="text-[#261761] font-medium">{asset.durationH.toFixed(1)} h</strong></span>
           </div>
         </>
@@ -292,11 +307,11 @@ export function ReplayCard({ selectedAssetCode, capacity, asset }: ReplayCardPro
       <div className="grid grid-cols-3 gap-[10px] mt-4" data-testid="summary-chips">
         <div className="bg-[#DDF7EE] rounded-[10px] px-3 py-2.5" data-testid="chip-charged">
           <p className="text-[11px] text-[#0B7757] m-0 mb-[3px]">Charged</p>
-          <p className="text-[15px] font-medium m-0 text-[#053E2D]" data-testid="charged-value">{Math.round(charged)} kWh</p>
+          <p className="text-[15px] font-medium m-0 text-[#053E2D]" data-testid="charged-value">{chargedMwh.toFixed(2)} MWh</p>
         </div>
         <div className="bg-[#FFE8DE] rounded-[10px] px-3 py-2.5" data-testid="chip-discharged">
           <p className="text-[11px] text-[#B8461A] m-0 mb-[3px]">Discharged</p>
-          <p className="text-[15px] font-medium m-0 text-[#5C210A]" data-testid="discharged-value">{Math.round(discharged)} kWh</p>
+          <p className="text-[15px] font-medium m-0 text-[#5C210A]" data-testid="discharged-value">{dischargedMwh.toFixed(2)} MWh</p>
         </div>
         <div className="bg-[#F0ECFE] rounded-[10px] px-3 py-2.5" data-testid="chip-cycles">
           <p className="text-[11px] text-[#4A30B5] m-0 mb-[3px]">Net cycles</p>

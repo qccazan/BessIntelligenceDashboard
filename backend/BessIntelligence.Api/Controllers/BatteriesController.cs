@@ -80,17 +80,14 @@ public class BatteriesController : ControllerBase
         if (battery is null)
             return NotFound();
 
-        var now = await _context.BatteryHistories
-            .Where(h => h.BatteryId == battery.Id)
-            .MaxAsync(h => (DateTimeOffset?)h.Timestamp);
-
-        if (now is null)
-            return Ok(new List<BatteryHistoryDto>());
-
-        var start = now.Value.AddHours(-24);
+        var tz = TimeZoneInfo.FindSystemTimeZoneById(
+            OperatingSystem.IsWindows() ? "W. Europe Standard Time" : "Europe/Amsterdam");
+        var localNow = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, tz);
+        var midnightToday = new DateTimeOffset(localNow.Year, localNow.Month, localNow.Day, 0, 0, 0, localNow.Offset);
+        var midnightYesterday = midnightToday.AddDays(-1);
 
         var history = await _context.BatteryHistories
-            .Where(h => h.BatteryId == battery.Id && h.Timestamp > start && h.Timestamp <= now.Value)
+            .Where(h => h.BatteryId == battery.Id && h.Timestamp >= midnightYesterday && h.Timestamp < midnightToday)
             .OrderBy(h => h.Timestamp)
             .Select(h => new BatteryHistoryDto(h.Timestamp, Math.Round(h.PowerKw, 1), Math.Round(h.SocPct, 1)))
             .ToListAsync();
