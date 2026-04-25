@@ -58,23 +58,19 @@
   .viewport {
     position: fixed;
     inset: 0;
-    display: grid;
-    place-items: center;
-    background:
-      radial-gradient(1200px 800px at 20% 0%, rgba(123, 92, 246, 0.18), transparent 60%),
-      radial-gradient(1000px 700px at 100% 100%, rgba(23, 184, 144, 0.08), transparent 60%),
-      #0E0B1F;
+    background: var(--canvas);
+    overflow: hidden;
   }
   .stage {
     width: 1920px;
     height: 1080px;
     background: var(--canvas);
     color: var(--ink);
-    position: relative;
-    transform-origin: center center;
-    box-shadow: 0 40px 120px rgba(0,0,0,0.5);
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
     overflow: hidden;
-    border-radius: 8px;
   }
 
   /* ---- Top chrome ---- */
@@ -1394,8 +1390,7 @@
   function fit() {
     const sx = window.innerWidth / 1920;
     const sy = window.innerHeight / 1080;
-    const s = Math.min(sx, sy);
-    stage.style.transform = 'scale(' + s + ')';
+    stage.style.transform = 'scale(' + sx + ',' + sy + ')';
   }
   window.addEventListener('resize', fit);
   fit();
