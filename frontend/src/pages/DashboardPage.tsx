@@ -95,6 +95,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
         <ReplayCard
           selectedAssetCode={selectedAssetId}
           capacity={selectedAsset?.capacityKwh ?? 1000}
+          asset={selectedAsset}
         />
       </div>
 

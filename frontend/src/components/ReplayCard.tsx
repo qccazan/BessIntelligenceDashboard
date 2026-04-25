@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { BatteryHistoryPoint } from '../services/batteryService';
+import type { BatteryHistoryPoint, FleetAsset } from '../services/batteryService';
 import { getBatteryHistory } from '../services/batteryService';
 
 interface ReplayCardProps {
   selectedAssetCode: string;
   capacity: number;
+  asset?: FleetAsset | null;
 }
 
 const STEP_MS = 100;
@@ -32,7 +33,7 @@ function formatTime(ts: string): string {
   return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-export function ReplayCard({ selectedAssetCode, capacity }: ReplayCardProps) {
+export function ReplayCard({ selectedAssetCode, capacity, asset }: ReplayCardProps) {
   const [history, setHistory] = useState<BatteryHistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [playheadIdx, setPlayheadIdx] = useState(0);
@@ -172,6 +173,25 @@ export function ReplayCard({ selectedAssetCode, capacity }: ReplayCardProps) {
           {mode}
         </span>
       </div>
+
+      {/* Selected battery description */}
+      {asset && (
+        <>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-[#F0ECFE] text-[#4A30B5]">Selected</span>
+            <span className="text-[13px] font-medium text-[#261761]" data-testid="replay-selected-name">{asset.code}</span>
+            <span className="text-[11px] text-[#5C5A7A]" data-testid="replay-selected-site">{asset.siteName} · {asset.location}</span>
+          </div>
+          <div className="flex items-center gap-4 flex-wrap text-[11px] text-[#5C5A7A] mb-3 px-1" data-testid="replay-specs-row">
+            <span>
+              <span className="inline-block px-[7px] py-[1px] rounded bg-[#F0ECFE] text-[#4A30B5] font-medium text-[10px] tracking-[0.03em]">{asset.chemistry}</span>
+            </span>
+            <span>Power rating <strong className="text-[#261761] font-medium">{asset.powerRatingKw} kW</strong></span>
+            <span>Capacity <strong className="text-[#261761] font-medium">{asset.capacityKwh.toLocaleString()} kWh</strong></span>
+            <span>Duration <strong className="text-[#261761] font-medium">{asset.durationH.toFixed(1)} h</strong></span>
+          </div>
+        </>
+      )}
 
       {/* Readout */}
       <div className="flex items-baseline gap-3.5 mb-2.5 flex-wrap" data-testid="replay-readout">
